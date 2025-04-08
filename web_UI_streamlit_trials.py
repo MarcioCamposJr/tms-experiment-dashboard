@@ -257,9 +257,10 @@ def save_file(file_name):
 
 if __name__ == '__main__':
     
+    main_path = "C:\\Users\\bioma\\Documents\\GitHub\\tms-experiment-dashboard\\"
     path_images = "C:\\Users\\bioma\\Documents\\GitHub\\tms-experiment-dashboard\\images\\"
 
-    rc1 = RemoteControl("http://127.0.1.1:5000")
+    rc1 = RemoteControl("http://127.0.0.1:5000")
     #rc1 = RemoteControl("http://192.168.200.240:5000") #Tesla
     #rc2 = RemoteControl("http://192.168.200.201:5000")
     #rc1 = RemoteControl("http://169.254.100.20:5000") #Thais
@@ -301,6 +302,8 @@ if __name__ == '__main__':
 
     q = queue.Queue()
     r = queue.Queue()
+    global counter
+
     counter = 1
     fiducial_counter = 0
 
@@ -340,7 +343,12 @@ if __name__ == '__main__':
 
     # New expander for user input fields
 
-    with st.expander("Experiment details", expanded=False):
+    @st.fragment
+    def experiment_tab():
+
+        exp_expander = st.expander("Experiment details", expanded=False)
+
+        
         # Dictionary fields
         fields = {
             "Experiment_name": "Paired pulse, dual site, bilateral, leftM1-rightPMv",
@@ -348,260 +356,339 @@ if __name__ == '__main__':
             "Start_date": "2025-01-31",
             "End_date": "2024-02-01",
             "Experiment_title": "Paired pulse contralateral conditioning",
-            "Experiment_description_details": "Paradigm with motor mapping totaling 80 trials with 20 pulses/condition. Target muscle: APB. Inter-pulse interval: 7 to 10 s."
+            "Experiment_description_details": "Paradigm with motor mapping totaling 80 trials with 20 pulses/condition. Target muscle: APB. Inter-pulse interval: 7 to 10 s.",
+            "File_name": "experiment_details.csv"
             }
 
         # Input fields
         for key, value in fields.items():
-            fields[key] = st.text_area(key.replace("_", " ").capitalize(), value, height=90)
+            fields[key] = exp_expander.text_area(key.replace("_", " ").capitalize(), value, height=90)
 
-        file_name = st.text_area("File name:", "experiment_details.csv", height=90)
-        save_button =  st.button("Save", key="save_file_button")
+        file_name = fields["File_name"] #st.text_area("File name:", "experiment_details.csv", height=90)
+        print("Saving 1! " + str(st.session_state.file_saved) + file_name)
+        st.session_state.file_name = file_name
+        #save_button =  st.button("Save", key="save_file_button")
 
-        if save_button and not st.session_state.file_saved:
-            result = save_file(file_name)  # Save file directly in the main thread
+        if exp_expander.button("Save"): # and not st.session_state.file_saved:
+            print("Saving 2!")
+            #result = save_file(main_path + file_name)  # Save file directly in the main thread
             
             st.session_state.file_saved = True
-            st.success(result)
+            st.session_state.file_name = file_name
+            #st.success(result)
             
-        if st.session_state.file_saved:
-            st.success("User input saved successfully.")
-            #st.session_state.file_saved = False
+            # Save logic in CSV format with quotes
+            with open(main_path + file_name, "w", newline='', encoding='utf-8') as f:
+                writer = csv.writer(f, quoting=csv.QUOTE_ALL)  # Quote all fields
+                # Write header
+                writer.writerow(fields.keys())
+                # Write data
+                writer.writerow(fields.values())
+            #st.success("User input saved successfully.")
 
-    # Expander for the dashboard Main Functions
-    with st.expander("Dashboard Main Functions", expanded=True):
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Conections", "Transformation", "Control", "Navigation", "Stimulation", "Info"])
 
-        with tab1: # Connections
-            st.markdown("""
-                <style>
-                .centered {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                }
-                </style>
-                """, unsafe_allow_html=True)
+            if st.session_state.file_saved:
+                st.success("User input saved successfully.")
+                st.session_state.file_saved = False
+
+    experiment_tab()
+
+    expander =  st.expander("Adjust settings")
+    expander.write("Test")
+    if expander.button("Reset Draft"):
+        st.write('Draft resetted')
+
+    if st.button("Save2"): # and not st.session_state.file_saved:
+        print("Saving 3! " + str(st.session_state.file_name))
+        st.session_state.file_saved = True
+
+        # Save logic in CSV format with quotes
+        with open(main_path + st.session_state.file_name, "w", newline='', encoding='utf-8') as f:
+            writer = csv.writer(f, quoting=csv.QUOTE_ALL)  # Quote all fields
+            # Write header
+            #writer.writerow(fields.keys())
+            # Write data
+            writer.writerow(fields.values())
+        st.success("User input saved successfully.")
         
-            st.markdown("<h3 style='text-align:center'>Connections</h4>", unsafe_allow_html=True)
-    
-            with st.container(border=True):
-                col1, col2, col3, col4 = st.columns([0.1,0.1,0.1,0.1])
-                
-                with col1:
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Project</p>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'computer_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-                with col2:
-                    #st.image('/home/iana/tms-robot-control/camera_icon.jpg', width=100)
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Camera</p>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'camera_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-                with col3:
-                    #st.image('/home/iana/tms-robot-control/robot_icon.jpg', width=100)
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Robot</p>", unsafe_allow_html=True)
-                    image = Image.open( path_images + 'robot_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-                with col4:
-                    #st.image('/home/iana/tms-robot-control/TMS_icon.jpg', width=100)
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>TMS</p>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'TMS_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-        with tab2: # Transformations
-            st.markdown("<h3 style='text-align:center'>Transformation</h4>", unsafe_allow_html=True)
-            with st.container(border=True):
-                st.markdown("<h4 style='text-align:center'>Image fiducials</h4>", unsafe_allow_html=True)
-                st.markdown("<p style='text-align:center'>NA</p>", unsafe_allow_html=True)
-                #st_tweaker.write("NA")
-                
-                subcol1, mid, subcol2 = st.columns([1,1,1])
-                with subcol1:
-                    st.markdown("<p style='text-align:right'>RE</p>", unsafe_allow_html=True)
-                    #st_tweaker.write("RE")
-                with mid:
-                    image = Image.open(path_images + 'head.jpg')
-                    #inverted_image = PIL.ImageOps.invert(image)
-                    st.image(image)
-                with subcol2:
-                    st_tweaker.write("LE")
-
-                st.markdown("<h5 style='text-align:center'>Transformation matrix set</h5>", unsafe_allow_html=True)
-
-                st.markdown("<h4 style='text-align:center'>Tracker fiducials</h4>", unsafe_allow_html=True)
-                st.markdown("<p style='text-align:center'>tNA</p>", unsafe_allow_html=True)
-                
-                subcol3, mid2, subcol4 = st.columns([1,1,1])
-                with subcol3:
-                    st.markdown("<p style='text-align:right'>tRE</p>", unsafe_allow_html=True)
-                    #st_tweaker.write("RE")
-                with mid2:
-                    image = Image.open(path_images + 'head.jpg')
-                    #inverted_image = PIL.ImageOps.invert(image)
-                    st.image(image)
-                with subcol4:
-                    st_tweaker.write("tLE")
-
-
-                #preview_area = st.text_area(label="X", value=0, label_visibility='collapsed', on_change=None,
-                #                    disabled=False, max_chars=5000)
-                #st_tweaker.writetext(label = "My label", id = "my-element-id")
-
-        with tab3: # 
-            st.markdown("<h2 style='text-align:center'>Execution</h4>", unsafe_allow_html=True)
-            with st.container(border=True):
-                col5, col6, col7, col8 = st.columns([0.1,0.1,0.1,0.1])
-
-                with col5:
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>3D target set</p>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'target_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-                with col6:
-                    st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Robot moving</p>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'move_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-
-                with col7:
-                    st.markdown("<h5 style='text-align:center'>Coil at target</h5>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'coil_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-                with col8:
-                    st.markdown("<h5 style='text-align:center'>Trials started</h5>", unsafe_allow_html=True)
-                    image = Image.open(path_images + 'trials_icon.jpg')
-                    st.image(image, width=80, use_container_width=True)
-
-        with tab5: # Stimulation
-            st.markdown("<h2 style='text-align:center'>Stimulation</h4>", unsafe_allow_html=True)
-            with st.container(border=True):# Input for number of trials
-                total_trials = st.number_input("Enter the total number of trials", min_value=1, max_value=1000, value=70)
-                current_trial = 15
-                # Initialize session state for current_trial
-                if 'current_trial' not in st.session_state:
-                    st.session_state.current_trial = current_trial
-
-                # Button for incrementing the current trial
-                #if st.button("Reset"):
-                    #if st.session_state.current_trial < total_trials:
-                    #st.session_state.current_trial += 1
-
-                # Input to set the current trial manually (optional)
-                #current_trial = st.slider("Select Current Trial", 1, total_trials, st.session_state.current_trial)
-                
-                # Create data for the bar chart
-                trial_numbers = np.arange(1, total_trials + 1)
-                colors = ["green" if trial <= current_trial else "red" for trial in trial_numbers]
-
-                # Create a DataFrame to plot
-                df = pd.DataFrame({
-                    'Trial': trial_numbers,
-                    'Color': colors,
-                    'Count': np.ones(total_trials)  # placeholder for count or other metric
-                })
-
-                # Define the bar chart using Altair
-                chart = alt.Chart(df).mark_bar().encode(
-                    x=alt.X('Trial:O', title='Trial', axis=alt.Axis(labelAngle=0)),  # X-axis for trial numbers (ordinal)
-                    y='Count:Q',  # Y-axis for count (quantity)
-                    color=alt.Color('Color:N', scale=alt.Scale(domain=['red', 'green'], range=['red', 'green']), legend=None),  # Set colors to red and green, no legend
-                    tooltip=['Trial', 'Color']  # Show trial number and color on hover
-                ).properties(
-                    width=1060,
-                    height=110
-                ).configure_axis(
-                    grid=False,  # Disable grid lines
-                    ticks=False,  # Disable axis ticks
-                    domain=False  # Disable axis line for Y-axis
-                ).configure_axisY(
-                    title=None,  # Remove the title for the Y-axis
-                    labels=False,  # Remove the labels for the Y-axis
-                )
-
-                # Display the chart
-                #mensagem, current_trial = r.get_nowait()
-                st.altair_chart(chart)
-
-        with tab6: # Information
-            st.markdown("""
-                <style>
-                .centered {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    text-align: center;
-                }
-                </style>
-                """, unsafe_allow_html=True)
+    @st.fragment
+    def main_tab():
         
-            st.markdown("<h3 style='text-align:center'>Information</h4>", unsafe_allow_html=True)
+        global counter
 
-        with tab4: # Navigation
-            st.markdown("<h2 style='text-align:center'>Navigation</h4>", unsafe_allow_html=True)
-            with st.container(border=False):# Input for number of trials
-                #fig, ax = plt.subplots()
-                figure, ax = plt.subplots(figsize=(15, 7))
-                line1, = ax.plot(x, y)
-                
-                # setting title
-                plt.title("Distance to target", fontsize=20)
+        # Expander for the dashboard Main Functions
 
-                
-                # setting x-axis label and y-axis label
-                plt.xlabel("Time (s)")
-                plt.ylabel("Distance (cm)")
+        with st.expander("Dashboard Main Functions", expanded=False):
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Conections", "Transformation", "Control", "Navigation", "Stimulation", "Info"])
 
-                # Set the background color to white for the current plot
-                plt.style.use('default')  # Reset to the default style
-                plt.rcParams.update({'axes.facecolor': 'white'})  # Set the figure background to white
-                plt.rcParams.update({'figure.facecolor': 'white'})  # Set the figure background to white
-                
-                
-                placeholder1 = st.empty()
-                with placeholder1.container():
-                    st.pyplot(figure)
-
-                #placeholder2 = st.empty()
-                #with placeholder2.container():
-                    #col1, col2, col3 = st.columns(3)
-                    #col1.metric(label="Distância atual:", value="")
-                    #col2.metric(label="Multiplicada por 10: ", value="")
-                    #col3.metric(label="Mensagem: ", value="")
-                # Loop
-                #for _ in range(50):
-                    # creating new Y values
+            with tab1: # Connections
+                st.markdown("""
+                    <style>
+                    .centered {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
             
-                while True:
-                    try:
-                        with placeholder1.container():
-                            val, multiply = q.get_nowait()
-                            new_last_y = np.sin(x+0.5 * val)[0] # first value of new graph 
+                st.markdown("<h3 style='text-align:center'>Connections</h4>", unsafe_allow_html=True)
+        
+                with st.container(border=True):
+                    col1, col2, col3, col4 = st.columns([0.1,0.1,0.1,0.1])
+                    
+                    with col1:
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Project</p>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'computer_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
 
-                            if counter == 1:
-                                new_y = np.sin(x+0.5 * val)
-                                counter += 1
-                                #pthread_kill(t1.ident, SIGTSTP)
-                            else:
-                                new_y = new_y[:-1] # delete last value
-                                new_y = np.insert(new_y, 0, distance) # insert new on first position
-                            #line1.set_xdata(x)
-                            line1.set_ydata(new_y[::-1]) # write y in reverse order, last point is new
-                            #line1.set_ydata(new_y)
+                    with col2:
+                        #st.image('/home/iana/tms-robot-control/camera_icon.jpg', width=100)
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Camera</p>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'camera_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
 
-                            figure.canvas.flush_events()
-                            #figure.canvas.draw()
-                            st.write(figure)
-                            update_dashboard()
-                            q.task_done()
-                    except queue.Empty:
-                        continue
+                    with col3:
+                        #st.image('/home/iana/tms-robot-control/robot_icon.jpg', width=100)
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Robot</p>", unsafe_allow_html=True)
+                        image = Image.open( path_images + 'robot_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+                    with col4:
+                        #st.image('/home/iana/tms-robot-control/TMS_icon.jpg', width=100)
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>TMS</p>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'TMS_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+            with tab2: # Transformations
+                st.markdown("<h3 style='text-align:center'>Transformation</h4>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown("<h4 style='text-align:center'>Image fiducials</h4>", unsafe_allow_html=True)
+                    st.markdown("<p style='text-align:center'>NA</p>", unsafe_allow_html=True)
+                    #st_tweaker.write("NA")
+                    
+                    subcol1, mid, subcol2 = st.columns([1,1,1])
+                    with subcol1:
+                        st.markdown("<p style='text-align:right'>RE</p>", unsafe_allow_html=True)
+                        #st_tweaker.write("RE")
+                    with mid:
+                        image = Image.open(path_images + 'head.jpg')
+                        #inverted_image = PIL.ImageOps.invert(image)
+                        st.image(image)
+                    with subcol2:
+                        st_tweaker.write("LE")
+
+                    st.markdown("<h5 style='text-align:center'>Transformation matrix set</h5>", unsafe_allow_html=True)
+
+                    st.markdown("<h4 style='text-align:center'>Tracker fiducials</h4>", unsafe_allow_html=True)
+                    st.markdown("<p style='text-align:center'>tNA</p>", unsafe_allow_html=True)
+                    
+                    subcol3, mid2, subcol4 = st.columns([1,1,1])
+                    with subcol3:
+                        st.markdown("<p style='text-align:right'>tRE</p>", unsafe_allow_html=True)
+                        #st_tweaker.write("RE")
+                    with mid2:
+                        image = Image.open(path_images + 'head.jpg')
+                        #inverted_image = PIL.ImageOps.invert(image)
+                        st.image(image)
+                    with subcol4:
+                        st_tweaker.write("tLE")
 
 
+                    #preview_area = st.text_area(label="X", value=0, label_visibility='collapsed', on_change=None,
+                    #                    disabled=False, max_chars=5000)
+                    #st_tweaker.writetext(label = "My label", id = "my-element-id")
+
+            with tab3: # 
+                st.markdown("<h2 style='text-align:center'>Execution</h4>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    col5, col6, col7, col8 = st.columns([0.1,0.1,0.1,0.1])
+
+                    with col5:
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>3D target set</p>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'target_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+                    with col6:
+                        st.markdown("<p style='text-align:center; font-size:20px; font-weight:bold;'>Robot moving</p>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'move_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+
+                    with col7:
+                        st.markdown("<h5 style='text-align:center'>Coil at target</h5>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'coil_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+                    with col8:
+                        st.markdown("<h5 style='text-align:center'>Trials started</h5>", unsafe_allow_html=True)
+                        image = Image.open(path_images + 'trials_icon.jpg')
+                        st.image(image, width=80, use_container_width=True)
+
+            with tab5: # Stimulation
+                @st.fragment
+                def stimulation_tab():
+                    st.markdown("<h2 style='text-align:center'>Stimulation</h4>", unsafe_allow_html=True)
+                    with st.container(border=True):# Input for number of trials
+                        total_trials = st.number_input("Enter the total number of trials", min_value=1, max_value=1000, value=70)
+                        current_trial = 15
+                        # Initialize session state for current_trial
+                        if 'current_trial' not in st.session_state:
+                            st.session_state.current_trial = current_trial
+
+                        # Button for incrementing the current trial
+                        #if st.button("Reset"):
+                            #if st.session_state.current_trial < total_trials:
+                            #st.session_state.current_trial += 1
+
+                        # Input to set the current trial manually (optional)
+                        #current_trial = st.slider("Select Current Trial", 1, total_trials, st.session_state.current_trial)
+                        
+                        # Create data for the bar chart
+                        trial_numbers = np.arange(1, total_trials + 1)
+                        colors = ["green" if trial <= current_trial else "red" for trial in trial_numbers]
+
+                        # Create a DataFrame to plot
+                        df = pd.DataFrame({
+                            'Trial': trial_numbers,
+                            'Color': colors,
+                            'Count': np.ones(total_trials)  # placeholder for count or other metric
+                        })
+
+                        # Define the bar chart using Altair
+                        chart = alt.Chart(df).mark_bar().encode(
+                            x=alt.X('Trial:O', title='Trial', axis=alt.Axis(labelAngle=0)),  # X-axis for trial numbers (ordinal)
+                            y='Count:Q',  # Y-axis for count (quantity)
+                            color=alt.Color('Color:N', scale=alt.Scale(domain=['red', 'green'], range=['red', 'green']), legend=None),  # Set colors to red and green, no legend
+                            tooltip=['Trial', 'Color']  # Show trial number and color on hover
+                        ).properties(
+                            width=1060,
+                            height=110
+                        ).configure_axis(
+                            grid=False,  # Disable grid lines
+                            ticks=False,  # Disable axis ticks
+                            domain=False  # Disable axis line for Y-axis
+                        ).configure_axisY(
+                            title=None,  # Remove the title for the Y-axis
+                            labels=False,  # Remove the labels for the Y-axis
+                        )
+
+                        # Display the chart
+                        #mensagem, current_trial = r.get_nowait()
+                        st.altair_chart(chart)
+
+                stimulation_tab()
+
+            with tab6: # Information
+                @st.fragment
+                def parameter_tab():
+                    st.markdown("""
+                    <style>
+                    .centered {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+            
+                    st.markdown("<h3 style='text-align:center'>Information</h4>", unsafe_allow_html=True)
+                    # Dictionary fields
+                    fields1 = {
+                        "EMG_config": "Paired pulse, dual site, bilateral, leftM1-rightPMv"
+                        }
+
+                    # Input fields
+                    for key, value in fields1.items():
+                        fields1[key] = st.text_area(key.replace("_", " "), value, height=68)
+
+                    col9, col10, col11, col12 = st.columns([0.1,0.1,0.1,0.1])
+                
+                    with col9:
+                        value1 = st.number_input("Conditioning stimulus (%)", min_value=80, max_value=100)
+                    with col10:
+                        value2 = st.number_input("Test stimulus (%)", min_value=110, max_value=140)             
+                    with col11:
+                        value3 = st.number_input("Number of intervals", min_value=4, max_value=100)
+                    with col12:
+                        value4 = st.number_input("Interval step (ms)", min_value=20, max_value=100)
+
+                    col13, col14, col15, col16 = st.columns([0.1,0.1,0.1,0.1])
+                
+                    with col13:
+                        value5 = st.number_input("Number of trials", min_value=120, max_value=300)
+                    with col14:
+                        value6 = st.number_input("Number of conditions", min_value=110, max_value=140)             
+                    with col15:
+                        value7 = st.number_input("Trials per condition", min_value=3, max_value=100)
+                    with col16:
+                        value8 = st.number_input("Inter_trial_interval (ms)", min_value=30, max_value=100)
+                
+                parameter_tab()
+
+            with tab4: # Navigation
+                st.markdown("<h2 style='text-align:center'>Navigation</h4>", unsafe_allow_html=True)
+                with st.container(border=False):# Input for number of trials
+                    #fig, ax = plt.subplots()
+                    figure, ax = plt.subplots(figsize=(15, 7))
+                    line1, = ax.plot(x, y)
+                    
+                    # setting title
+                    plt.title("Distance to target", fontsize=20)
+
+                    
+                    # setting x-axis label and y-axis label
+                    plt.xlabel("Time (s)")
+                    plt.ylabel("Distance (cm)")
+
+                    # Set the background color to white for the current plot
+                    plt.style.use('default')  # Reset to the default style
+                    plt.rcParams.update({'axes.facecolor': 'white'})  # Set the figure background to white
+                    plt.rcParams.update({'figure.facecolor': 'white'})  # Set the figure background to white
+                    
+                    
+                    placeholder1 = st.empty()
+                    with placeholder1.container():
+                        st.pyplot(figure)
+
+                    #placeholder2 = st.empty()
+                    #with placeholder2.container():
+                        #col1, col2, col3 = st.columns(3)
+                        #col1.metric(label="Distância atual:", value="")
+                        #col2.metric(label="Multiplicada por 10: ", value="")
+                        #col3.metric(label="Mensagem: ", value="")
+                    # Loop
+                    #for _ in range(50):
+                        # creating new Y values
+                
+                    while True:
+                        try:
+                            with placeholder1.container():
+                                val, multiply = q.get_nowait()
+                                new_last_y = np.sin(x+0.5 * val)[0] # first value of new graph 
+
+                                if counter == 1:
+                                    new_y = np.sin(x+0.5 * val)
+                                    counter += 1
+                                    #pthread_kill(t1.ident, SIGTSTP)
+                                else:
+                                    new_y = new_y[:-1] # delete last value
+                                    new_y = np.insert(new_y, 0, distance) # insert new on first position
+                                #line1.set_xdata(x)
+                                line1.set_ydata(new_y[::-1]) # write y in reverse order, last point is new
+                                #line1.set_ydata(new_y)
+
+                                figure.canvas.flush_events()
+                                #figure.canvas.draw()
+                                st.write(figure)
+                                update_dashboard()
+                                q.task_done()
+                        except queue.Empty:
+                            continue
+
+    main_tab()
 
