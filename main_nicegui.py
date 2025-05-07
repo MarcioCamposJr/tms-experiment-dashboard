@@ -24,37 +24,24 @@ import queue
 # 3. run main_nicegui in VSCode terminal using: 
 # "C:/Users/bioma/anaconda3/envs/tms_dashboard/python.exe c:/Users/bioma/Documents/GitHub/tms-experiment-dashboard/main_nicegui.py"
 # 
-# for remote connection:
+# for remote connection in a ubuntu OS:
 # using sudo sh ../rede_biomag.sh
 # start in terminal with:
-# streamlit run /static/web_UI_streamlit.py 192.168.200.201 5000
+# python main_nicegui.py 192.168.200.201 5000
 # 
 
 # Define variaveis
 global robot_messages
-global distance_0
-global distance_x
-global distance_y
-global distance_z
-
 CSV_FILE = 'nice_details.csv'
-distance_0 = 0
-distance_x = 0
-distance_y = 0
-distance_z = 0
+
 robot_messages = {'Neuronavigation to Robot: Set target', 'Start navigation', 'Open navigation menu', 'Close Project', 'Project loaded successfully', 'Set image fiducial', 'Reset image fiducials', 'Set robot transformation matrix', 'Set target', 'Tracker fiducials set', 'Set objective', 'Unset target', 'Remove sensors ID', 'Reset tracker fiducials', 'Robot connection status','Reset image fiducials', 'Disconnect tracker', 'Tracker changed', 'From Neuronavigation: Update tracker poses','Coil at target', 'Neuronavigation to Robot: Update displacement to target', 'Trials started', 'Trial triggered', 'Stop navigation'}
 textos = ['Project', 'Robot', 'Camera', 'TMS', 'Left Fiducial', 'Nasion', 'Right Fiducial', 'Left Tragus', 'Nose', 'Right Tragus', 'Target', 'Coil', 'Moving', 'Trials', 'Navigation stopped']
 labels: dict[str, Label] = {}
 
-# Se o arquivo não existir ainda, cria com cabeçalho
-if not os.path.exists(CSV_FILE):
-    with open(CSV_FILE, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Nome', 'Email', 'Idade'])
-
 @dataclass
 class Dashboard():
     def __init__(self):
+        # screen features
         self.project_set = False
         self.camera_set = False
         self.robot_set = False
@@ -70,18 +57,47 @@ class Dashboard():
         self.robot_moving = False
         self.at_target = False
         self.trials_started = False
+        # navigation pointers
         self.displacement = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.probe_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.head_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.coil_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
-        self.target_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
+        self.target_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64) # to be implemented and or confirmed
+        # experiment metadata holders 
+        self.experimentName = 'Paired pulse, dual site, bilateral, leftM1-rightPMv'
+        self.experiment_description = 'Dual site paired bilateral TMS stimulation, with 2 channel EMG acquisition. 80 trials, 4 experimental conditions, 200 pulses'
+        self.start_date = '2025-01-31'
+        self.end_date = '2024-02-01'
+        self.experiment_details = 'Paired pulse contralateral conditioning. Paradigm with motor mapping totaling 80 trials with 20 pulses/condition. Target muscle: APB. Inter-pulse interval: 7 to 10 s.'
+        # stimulation metadata holders 
+        self.conditioning_stimulus = 'right ventral premotor cortex (rPMv)' # Conditioning stimulus location
+        self.test_stimulus = 'left M1' # Test stimulus location
+        self.number_intervals = '30' # Number of intervals
+        self.interval_step = '15' # Interval step (ms)
+        self.number_trials = '120' # Number of trials
+        self.number_conditions = '4' # Number of conditions
+        self.trials_conditon = '30' # Trials per condition 
+        self.intertrial_interval = '12' # Trials per condition
 
 # Função para gravar no CSV
 def gravar_dados():
-    with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow([cStim.value, tStim.value, nInt.value, iSteps.value, nTrials.value, nConditions.value, tConditons.value, itInterval.value])
-    ui.notify('Dados gravados com sucesso!')
+    agora = datetime.now()
+    data_formatada = agora.strftime('%Y-%m-%d %H:%M:%S')
+    
+    if not os.path.exists(CSV_FILE):
+        with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Data atual", eName.label, eDescription.label, sDate.label, eDate.label, eDetails.label, cStim.label, tStim.label,\
+                    nInt.label, iSteps.label, nTrials.label, nConditions.label, tConditons.label, itInterval.label])
+            writer.writerow([data_formatada, eName.value, eDescription.value, sDate.value, eDate.value, eDetails.value, cStim.value, tStim.value,\
+                            nInt.value, iSteps.value, nTrials.value, nConditions.value, tConditons.value, itInterval.value])
+        ui.notify('Dados gravados com sucesso!')
+    else:
+        with open(CSV_FILE, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow([data_formatada, eName.value, eDescription.value, sDate.value, eDate.value, eDetails.value, cStim.value, tStim.value,\
+                            nInt.value, iSteps.value, nTrials.value, nConditions.value, tConditons.value, itInterval.value])
+        ui.notify('Dados gravados com sucesso!') 
 
 # Função para definir cor padrão (vermelho p=alido)
 def estilo_padrao(bg: str = '#E8F5E9') -> str:
@@ -311,7 +327,7 @@ threading.Thread(
     daemon=None).start() # Inicia o threading
 
 # Título da página
-with ui.row().classes('items-center q-pa-md'):
+with ui.row().classes('items-center q-pa-md w-full'):
     ui.image('static/biomag_logo.jpg').classes('w-12 h-12')
     ui.label('Biomag TMS Dashboard').classes('text-h4')
 
@@ -319,12 +335,12 @@ with ui.row().classes('items-center q-pa-md'):
 with ui.expansion('Experiment details', icon='expand_more'):
     ui.label('Edit the experiment details')
 
-    eName = ui.input('Experiment_name', value='Paired pulse, dual site, bilateral, leftM1-rightPMv')
-    eDescription = ui.input('Experiment_description', value='Dual site paired bilateral TMS stimulation, with 2 channel EMG acquisition. 80 trials, 4 experimental conditions, 200 pulses')
-    sDate = ui.input('Start_date', value='2025-01-31')
-    eDate = ui.input('End_date', value='2024-02-01')
-    eDetails = ui.input('Experiment_details', value='Paired pulse contralateral conditioning. Paradigm with motor mapping totaling 80 trials with 20 pulses/condition. Target muscle: APB. Inter-pulse interval: 7 to 10 s.')
-
+    eName = ui.input('Experiment_name', value = dashboard.experimentName)
+    eDescription = ui.input('Experiment_description', value = dashboard.experiment_description)
+    sDate = ui.input('Start_date', value = dashboard.start_date)
+    eDate = ui.input('End_date', value = dashboard.end_date)
+    eDetails = ui.input('Experiment_details', value = dashboard.experiment_details)
+    
     ui.button('Save', on_click=gravar_dados)
 
 # Expansor com as principais funções
@@ -542,18 +558,16 @@ with ui.expansion('Dashboard Main Functions', icon='expand_more'):
 
                     ui.timer(0.1, update_positions) # atualiza as posições e rotações dos objetos no gráfico 3D
 
-
-            
         with ui.tab_panel(five):
             ui.label('Stimulation setup')
-            cStim = ui.input('Conditioning stimulus (%)', value='right ventral premotor cortex (rPMv)')
-            tStim = ui.input('Test stimulus (%)', value='left M1')
-            nInt = ui.input('Number of intervals', value='30').props('type=number')
-            iSteps = ui.input('Interval step (ms)', value='15')
-            nTrials = ui.input('Number of trials', value='120')
-            nConditions = ui.input('Number of conditions', value='4')             
-            tConditons = ui.input('Trials per condition', value='30')
-            itInterval = ui.input('Inter_trial_interval (ms)', value='12')
+            cStim = ui.input('Conditioning stimulus (%)', value = dashboard.conditioning_stimulus)
+            tStim = ui.input('Test stimulus (%)', value = dashboard.test_stimulus)
+            nInt = ui.input('Number of intervals', value = dashboard.number_intervals).props('type=number')
+            iSteps = ui.input('Interval step (ms)', value = dashboard.interval_step)
+            nTrials = ui.input('Number of trials', value = dashboard.number_trials)
+            nConditions = ui.input('Number of conditions', value = dashboard.number_conditions)             
+            tConditons = ui.input('Trials per condition', value = dashboard.trials_conditon)
+            itInterval = ui.input('Inter_trial_interval (ms)', value = dashboard.intertrial_interval)
             ui.button('Gravar', on_click=gravar_dados, icon='save')
         
         with ui.tab_panel(six):

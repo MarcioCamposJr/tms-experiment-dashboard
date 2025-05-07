@@ -17,7 +17,7 @@ setup(
         "altair",
         "python-socketio",
     ],
-    python_requires='>=3.13.2',
+    python_requires='>=3',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
