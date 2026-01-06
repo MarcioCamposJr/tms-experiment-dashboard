@@ -73,3 +73,8 @@ build/
 dist/
 *.egg-info/
 .eggs/
+
+# Project-specific
+data/
+*.csv
+!data/.gitkeep
