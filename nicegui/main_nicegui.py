@@ -499,7 +499,7 @@ with ui.expansion('Dashboard Main Functions', icon='expand_more'):
 
 
                     with ui.scene().classes('w-full h-64') as scene:
-                        '''scene.axes_helper()
+                        '''scene.axes()
                         scene.sphere().material('#4488ff').move(2, 2)
                         scene.cylinder(1, 0.5, 2, 20).material('#ff8800', opacity=0.5).move(-2, 1)
                         scene.extrusion([[0, 0], [0, 1], [1, 0.5]], 0.1).material('#ff8888').move(2, -1)
@@ -578,7 +578,7 @@ with ui.expansion('Dashboard Main Functions', icon='expand_more'):
             ui.button('Camera → verde', on_click=lambda: mudar_cor('Nose', 'green'))
             ui.button('Texto C → azul', on_click=lambda: mudar_cor('Left Tragus', 'blue'))
 ui.fullscreen()
-ui.run(port=8084)
+ui.run(port=8085)
 
 update_dashboard()
 #ui.run(reload=False)
