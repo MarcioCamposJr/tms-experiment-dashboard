@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib",
     "scipy",
     "python-dotenv",
+    "nicegui>=3.4.1",
 ]
 
 # Optional framework dependencies

@@ -33,6 +33,11 @@ class DashboardState:
         self.tracker_NA_set = False  # Nose
         self.tracker_RE_set = False  # Right tragus
         self.tracker_LE_set = False  # Left tragus
+
+        # Makers Visibilities
+        self.probe_visible = False
+        self.head_visible = False
+        self.coil_visible = False
         
         # Robot and navigation status
         self.matrix_set = False

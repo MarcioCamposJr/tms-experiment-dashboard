@@ -79,8 +79,19 @@ class MessageHandler:
             case 'Neuronavigation to Robot: Update displacement to target':
                 self._handle_displacement(data)
             
-            case 'Tracker changed':
+            case "Sensors ID":
+                self.dashboard.camera_set = True
+
+                self.dashboard.probe_visible = data[0]
+                self.dashboard.head_visible = data[1]
+                self.dashboard.coil_visible = all(data[2:])
+            
+            case 'Remove sensors ID':
                 self.dashboard.camera_set = False
+
+                self.dashboard.probe_visible = False
+                self.dashboard.head_visible = False
+                self.dashboard.coil_visible = False
             
             case 'Tracker fiducials set':
                 self.dashboard.tracker_LE_set = True
@@ -92,30 +103,29 @@ class MessageHandler:
                 self.dashboard.tracker_RE_set = False
                 self.dashboard.tracker_LE_set = False
             
+            case "Robot to Neuronavigation: Robot connection status":
+                self.dashboard.robot_set = True if data['state'] == 'Connected' else False
+            
             case 'Open navigation menu':
-                self.dashboard.robot_set = True
                 self.dashboard.matrix_set = True
             
-            case 'Neuronavigation to Robot: Set target':
-                self._handle_set_target(data)
+            case 'Set target':
+                self.dashboard.target_set = True
             
             case 'Unset target':
                 self.dashboard.target_set = False
+
+            case "Robot to Neuronavigation: Set objective":
+                self.dashboard.robot_moving = False if data["objective"] == 0 else True
             
             case 'Start navigation':
-                self.dashboard.robot_moving = True
+                pass
             
             case 'Coil at target':
                 if data['state'] == True:
                     self.dashboard.at_target = True
-                    self.dashboard.robot_moving = False
                 else:
                     self.dashboard.at_target = False
-            
-            case 'Trial triggered':
-                print(data)
-                print(str(self.dashboard.trials_started))
-                self.dashboard.trials_started = True
             
             case 'Stop navigation':
                 self.dashboard.robot_moving = False
@@ -163,7 +173,6 @@ class MessageHandler:
             poses[3][0], poses[3][1], poses[3][2],
             np.degrees(poses[3][3]), np.degrees(poses[3][4]), np.degrees(poses[3][5])
         )
-        self.dashboard.robot_moving = True
     
     def _handle_displacement(self, data):
         """Handle displacement to target update."""
@@ -172,11 +181,4 @@ class MessageHandler:
         self.distance_y = self.dashboard.displacement[1]
         self.distance_z = self.dashboard.displacement[2]
         self.distance_0 = (self.distance_x + self.distance_y + self.distance_z) / 3
-        self.dashboard.robot_moving = True
-    
-    def _handle_set_target(self, data):
-        """Handle target setting."""
-        target = data['target']
-        self.dashboard.target_location = (target[0][3], target[1][3], target[2][3])
-        print(self.dashboard.target_location)
-        self.dashboard.target_set = True
+

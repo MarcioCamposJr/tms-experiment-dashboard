@@ -62,20 +62,24 @@ def create_dashboard_tabs(dashboard: DashboardState):
                     
                     with ui.row().style('gap: 2.5rem; flex: 1; align-items: center;'):
                         with ui.row().style('gap: 5px;'):
-                            ui.icon('computer').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('computer').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Project').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_project'] = icon
                             dashboard.__dict__['label_project'] = label
                         with ui.row().style('gap: 5px;'):
-                            ui.icon('precision_manufacturing').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('precision_manufacturing').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Robot').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_robot'] = icon
                             dashboard.__dict__['label_robot'] = label
                         with ui.row().style('gap: 5px;'):
-                            ui.icon('videocam').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('videocam').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Camera').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_camera'] = icon
                             dashboard.__dict__['label_camera'] = label
                         with ui.row().style('gap: 5px;'):
-                            ui.icon('offline_bolt').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('offline_bolt').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('TMS').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_tms'] = icon
                             dashboard.__dict__['label_tms'] = label
                 
                 ui.separator().style('margin: 4px 0;')
@@ -105,27 +109,29 @@ def create_dashboard_tabs(dashboard: DashboardState):
                         # Image fiducials (left column)
                         with ui.column().style('gap: 1px;'):
                             ui.label('Image').style('font-size: 1.2rem; color: #6B6B6B; margin-bottom: 1px;')
-                            for label_text, icon in [
+                            for label_text, icon_name in [
                                 ('L Fid', 'radio_button_unchecked'),
                                 ('Nasion', 'radio_button_unchecked'),
                                 ('R Fid', 'radio_button_unchecked'),
                             ]:
                                 with ui.row().classes('items-center').style('gap: 2px;'):
-                                    ui.icon(icon).style('font-size: 15px; color: #9ca3af;')
+                                    icon = ui.icon(icon_name).style('font-size: 15px; color: #9ca3af;')
                                     label = ui.label(label_text).style('font-size: 1rem; color: #9ca3af;')
+                                    dashboard.__dict__[f'icon_{label_text.lower().replace(" ", "_")}'] = icon
                                     dashboard.__dict__[f'label_{label_text.lower().replace(" ", "_")}'] = label
                         
                         # Tracker fiducials (right column)
                         with ui.column().style('gap: 1px;'):
                             ui.label('Tracker').style('font-size: 1.2rem; color: #6B6B6B; margin-bottom: 1px;')
-                            for label_text, icon in [
+                            for label_text, icon_name in [
                                 ('L Tragus', 'radio_button_unchecked'),
                                 ('Nose', 'radio_button_unchecked'),
                                 ('R Tragus', 'radio_button_unchecked'),
                             ]:
                                 with ui.row().classes('items-center').style('gap: 2px;'):
-                                    ui.icon(icon).style('font-size: 15px; color: #9ca3af;')
-                                    label = ui.label(label_text).style('font-size: 0.85rem; color: #9ca3af;')
+                                    icon = ui.icon(icon_name).style('font-size: 15px; color: #9ca3af;')
+                                    label = ui.label(label_text).style('font-size: 1rem; color: #9ca3af;')
+                                    dashboard.__dict__[f'icon_{label_text.lower().replace(" ", "_")}'] = icon
                                     dashboard.__dict__[f'label_{label_text.lower().replace(" ", "_")}'] = label
                 
                 ui.separator().style('margin: 4px 0;')
@@ -136,23 +142,27 @@ def create_dashboard_tabs(dashboard: DashboardState):
                     
                     with ui.row().style('gap: 2.5rem; margin-bottom: 2px; width: 100%;'):
                         with ui.row().style('gap: 3px;'):
-                            ui.icon('gps_fixed').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('gps_fixed').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Target').style(f'font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_target'] = icon
                             dashboard.__dict__['label_target'] = label
                         
                         with ui.row().style('gap: 3px;'):
-                            ui.icon('radar').style('font-size: 22px; color: #9ca3af;')
-                            label = ui.label('Coil').style('font-size: 1.0rem; color: #9ca3af;')
+                            icon = ui.icon('radar').style('font-size: 22px; color: #9ca3af;')
+                            label = ui.label('Coil at target').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_coil'] = icon
                             dashboard.__dict__['label_coil'] = label
                     
                         with ui.row().style('gap: 3px;'):
-                            ui.icon('sync').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('sync').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Moving').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_moving'] = icon
                             dashboard.__dict__['label_moving'] = label
                         
                         with ui.row().style('gap: 3px;'):
-                            ui.icon('dataset').style('font-size: 22px; color: #9ca3af;')
+                            icon = ui.icon('dataset').style('font-size: 22px; color: #9ca3af;')
                             label = ui.label('Trials').style('font-size: 1.0rem; color: #9ca3af;')
+                            dashboard.__dict__['icon_trials'] = icon
                             dashboard.__dict__['label_trials'] = label
                 
                 ui.separator().style('margin: 4px 0;')

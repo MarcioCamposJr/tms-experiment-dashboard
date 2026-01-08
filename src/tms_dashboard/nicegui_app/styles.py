@@ -80,17 +80,42 @@ def section_title_style() -> str:
     )
 
 
-def change_color(target_label: str, new_status: str):
-    """Change the color of a registered label.
+def change_color(dashboard, target_label: str, new_status: str):
+    """Change the color of a label and its associated icon.
+    
+    Apenas duas cores são usadas:
+    - 'success': Verde (#10b981) - Estado ativo/conectado
+    - 'neutral': Cinza (#9ca3af) - Estado inativo/desconectado
     
     Args:
-        target_label: Name of the label to update
-        new_status: Status ('success', 'error', etc.)
+        dashboard: DashboardState instance containing label and icon references
+        target_label: Name of the label to update (will be converted to lowercase)
+        new_status: Status - 'success' or 'neutral'
     """
-    if target_label in labels:
-        label: Label = labels[target_label]
-        label.style(status_badge_style(new_status))
+    # Apenas duas cores possíveis
+    color = '#10b981' if new_status == 'success' else '#9ca3af'  # Verde ou Cinza
+    
+    # Update label if exists in dashboard
+    label_key = f'label_{target_label.lower().replace(" ", "_")}'
+    if hasattr(dashboard, label_key):
+        label = getattr(dashboard, label_key)
+        label.style(f'font-size: 1.0rem; color: {color}; font-weight: 500;')
         label.update()
+    
+    # Update associated icon if exists
+    icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
+    if hasattr(dashboard, icon_key):
+        icon = getattr(dashboard, icon_key)
+        icon.style(f'font-size: 22px; color: {color};')
+        icon.update()
+
+def change_icon(dashboard, target_label: str, new_status: str):
+    """Change the icon of a label based on status."""
+    icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
+    if hasattr(dashboard, icon_key):
+        icon = getattr(dashboard, icon_key)
+        icon.name = 'radio_button_unchecked' if new_status == 'neutral' else 'radio_button_checked'
+        icon.update()
 
 
 def update_dashboard_colors(dashboard):
@@ -103,17 +128,26 @@ def update_dashboard_colors(dashboard):
     def get_status(condition: bool) -> str:
         return 'success' if condition else 'neutral'
     
-    change_color("Project", get_status(dashboard.project_set))
-    change_color("Camera", get_status(dashboard.camera_set))
-    change_color("Robot", get_status(dashboard.robot_set))
-    change_color("TMS", get_status(dashboard.tms_set))
-    change_color("Nasion", get_status(dashboard.image_NA_set))
-    change_color("Right Fiducial", get_status(dashboard.image_RE_set))
-    change_color("Left Fiducial", get_status(dashboard.image_LE_set))
-    change_color("Nose", get_status(dashboard.tracker_NA_set))
-    change_color("Right Tragus", get_status(dashboard.tracker_RE_set))
-    change_color("Left Tragus", get_status(dashboard.tracker_LE_set))
-    change_color("Target", get_status(dashboard.target_set))
-    change_color("Moving", get_status(dashboard.robot_moving))
-    change_color("Coil", get_status(dashboard.at_target))
-    change_color("Trials", get_status(dashboard.trials_started))
+    change_color(dashboard, "project", get_status(dashboard.project_set))
+    change_color(dashboard, "camera", get_status(dashboard.camera_set))
+    change_color(dashboard, "robot", get_status(dashboard.robot_set))
+    change_color(dashboard, "tms", get_status(dashboard.tms_set))
+    change_color(dashboard, "probe", get_status(dashboard.probe_visible))
+    change_color(dashboard, "head", get_status(dashboard.head_visible))
+    change_color(dashboard, "coil", get_status(dashboard.coil_visible))
+
+    change_color(dashboard, "nasion", get_status(dashboard.image_NA_set))
+    change_icon(dashboard, "nasion", get_status(dashboard.image_NA_set))
+    change_color(dashboard, "r_fid", get_status(dashboard.image_RE_set))
+    change_icon(dashboard, "r_fid", get_status(dashboard.image_RE_set))
+    change_color(dashboard, "l_fid", get_status(dashboard.image_LE_set))
+    change_icon(dashboard, "l_fid", get_status(dashboard.image_LE_set))
+    change_color(dashboard, "nose", get_status(dashboard.tracker_NA_set))
+    change_icon(dashboard, "nose", get_status(dashboard.tracker_NA_set))
+    change_color(dashboard, "l_tragus", get_status(dashboard.tracker_LE_set))
+    change_icon(dashboard, "l_tragus", get_status(dashboard.tracker_LE_set))
+
+    change_color(dashboard, "target", get_status(dashboard.target_set))
+    change_color(dashboard, "moving", get_status(dashboard.robot_moving))
+    change_color(dashboard, "coil", get_status(dashboard.at_target))
+    # change_color(dashboard, "trials", get_status(dashboard.trials_started))
