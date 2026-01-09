@@ -6,6 +6,8 @@
 
 ## 🚀 Instalação Rápida
 
+### Opção 1: Com uv (Recomendado)
+
 ```bash
 # Clone o repositório
 git clone git@github.com:biomaglab/tms-experiment-dashboard.git
@@ -17,16 +19,52 @@ uv sync --extra nicegui
 # OU instale com Streamlit
 uv sync --extra streamlit
 
-# OU install ambos
+# OU instale ambos
 uv sync --extra all
+```
+
+### Opção 2: Com pip/venv (Tradicional)
+
+```bash
+# Clone o repositório
+git clone git@github.com:biomaglab/tms-experiment-dashboard.git
+cd tms-experiment-dashboard
+
+# Crie um ambiente virtual
+python -m venv .venv
+
+# Ative o ambiente virtual
+# Windows:
+.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
+
+# Instale as dependências
+pip install -e .
+
+# OU instale com NiceGUI
+pip install -e .[nicegui]
+
+# OU instale com Streamlit
+pip install -e .[streamlit]
+
+# OU instale com ambos
+pip install -e .[all]
 ```
 
 ## ☕ Como Usar
 
 ### 1. Inicie o servidor de relay
 
+**Com uv:**
 ```bash
 uv run python scripts/relay_server.py 127.0.0.1 5000
+```
+
+**Com pip/venv:**
+```bash
+# Certifique-se que o ambiente virtual está ativado
+python scripts/relay_server.py 127.0.0.1 5000
 ```
 
 ### 2. (Opcional) Inicie o InVesalius
@@ -37,9 +75,16 @@ python /caminho/para/invesalius3/app.py --remote-host http://localhost:5000
 
 ### 3. Inicie o Dashboard
 
+**Com uv:**
 ```bash
 # Auto-detecção (NiceGUI ou Streamlit)
 uv run python main.py
+```
+
+**Com pip/venv:**
+```bash
+# Certifique-se que o ambiente virtual está ativado
+python main.py
 ```
 
 **Acesso:**
