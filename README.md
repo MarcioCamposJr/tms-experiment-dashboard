@@ -1,6 +1,8 @@
 # Biomag TMS Experiment Dashboard 
 
-<img src="https://github.com/biomaglab.png" width="100px;"alt="Logo Biomag">
+<p align="center">
+  <img src="https://github.com/biomaglab.png" width="100px" alt="Logo Biomag">
+</p>
 
 > Interface gráfica web moderna para visualização e controle de eventos durante experimentos de TMS acoplados a EMG usando o InVesalius.
 
