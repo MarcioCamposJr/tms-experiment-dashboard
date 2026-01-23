@@ -76,6 +76,7 @@ class DashboardState:
         
         # Checklist for experiment
         self.experiment_checklist = ['Check the equipment connections.', 'Position subject marker', 'Prepare EMG electrodes']
+        self.checklist_checked = {str(i): False for i in range(len(self.experiment_checklist))}
         
         # Stimulation parameters
         self.conditioning_stimulus = 'right ventral premotor cortex (rPMv)'
