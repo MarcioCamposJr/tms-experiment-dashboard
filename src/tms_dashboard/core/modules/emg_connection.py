@@ -51,7 +51,7 @@ class neuroOne:
         try:
             self.__sock.bind(('', DATA_PORT))
         except Exception as e:
-            print(f"✗ Erro no Bind: {e}")
+            print(f"Erro no Bind: {e}")
     
     def start(self):
         if not self.__running:
@@ -107,7 +107,7 @@ class neuroOne:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.sendto(join_packet, (NEURONE_IP, JOIN_PORT))
         except Exception as e:
-            print(f"✗ Erro ao enviar JOIN: {e}")
+            print(f"Erro ao enviar JOIN: {e}")
         
     def __process_pack(self, frame_type, data):
         if frame_type == FrameType.MEASUREMENT_START:
@@ -152,7 +152,7 @@ class neuroOne:
                     if seq_no != expected:
                         lost = (seq_no - expected) % (2**32)
                         self.__packets_lost += lost
-                        print(f"⚠️ {lost} pacote(s) UDP perdido(s)! Total acumulado: {self.__packets_lost}")
+                        print(f"{lost} pacote(s) UDP perdido(s)! Total acumulado: {self.__packets_lost}")
                 
                 self.__last_seq_no = seq_no
             
@@ -224,7 +224,6 @@ class neuroOne:
                         window = list(self.__buffer)[start_pos:end_pos]
                         self.__triggered_windows_data.append(window)
                         triggers_to_remove.append(trig)
-                        print(f"✓ Janela MEP capturada para trigger na amostra {trig['idx']}")
             
             # Remove processed triggers
             for trig in triggers_to_remove:

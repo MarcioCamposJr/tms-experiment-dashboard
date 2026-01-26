@@ -140,7 +140,6 @@ class MessageHandler:
             
             case "Press navigation button":
                 self.dashboard.navigation_button_pressed = data["cond"]
-                print(data["cond"])
     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""

@@ -23,12 +23,17 @@ def create_time_series_panel(dashboard: DashboardState):
                 fig_mep = mep_plot.figure
                 ax_mep = fig_mep.gca() # Pega o eixo atual
                 
-                ax_mep.set_xlabel('Time (s)', fontsize=10)
-                ax_mep.set_ylabel('Amplitude (mV)', fontsize=10)
+                # Inicializar com plot vazio para exibir eixos e labels
+                ax_mep.plot([], [], color='#ef4444', linewidth=2.5)
+                
+                ax_mep.set_xlabel('Time (ms)', fontsize=10)
+                ax_mep.set_ylabel('MEP amplitude (uV)', fontsize=10)
+                ax_mep.set_xlim(-10, 40)  # Escala fixa de -10 a 40 ms
                 ax_mep.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
                 ax_mep.set_facecolor('#fafafa')
                 fig_mep.patch.set_facecolor('#ffffff')
                 fig_mep.tight_layout()
+                mep_plot.update()
             
             # Guardamos as referências para atualizar depois
             dashboard.mep_plot = mep_plot

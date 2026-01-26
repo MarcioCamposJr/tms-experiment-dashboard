@@ -9,6 +9,7 @@ Priority: NiceGUI → Streamlit
 
 import sys
 from pathlib import Path
+import traceback
 
 # Add src directory to Python path
 src_dir = Path(__file__).parent / "src"
@@ -19,8 +20,8 @@ def main():
     """Main entry point with framework auto-detection."""
     
     # Mensagem de inicialização (apenas uma vez)
-    print("🚀 Iniciando TMS Dashboard com NiceGUI...")
-    print(f"📡 Acesse: http://localhost:8084")
+    print("Iniciando TMS Dashboard com NiceGUI...")
+    print(f"Acesse: http://localhost:8084")
     
     # Try NiceGUI first
     try:
@@ -29,22 +30,7 @@ def main():
         return
         
     except ImportError as e:
-        print(f"\n⚠️  NiceGUI not available: {e}")
-        print("Trying Streamlit...")
-    
-    # Fallback to Streamlit
-    try:
-        from tms_dashboard.streamlit_app.run import main as streamlit_run
-        streamlit_run()
-        return
-        
-    except ImportError:
-        print("\n❌ Error: No framework available!")
-        print("\nPlease install a framework:")
-        print("  For NiceGUI: uv sync --extra nicegui")
-        print("  For Streamlit: uv sync --extra streamlit")
-        print("  For both: uv sync --extra all")
-        sys.exit(1)
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
