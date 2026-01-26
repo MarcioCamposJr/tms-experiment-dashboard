@@ -97,7 +97,7 @@ class MessageHandler:
                 self.dashboard.tracker_LE_set = False
             
             case "Robot to Neuronavigation: Robot connection status":
-                self.dashboard.robot_set = True if data['state'] == 'Connected' else False
+                self.dashboard.robot_set = True if data['data'] == 'Connected' else False
             
             case 'Open navigation menu':
                 self.dashboard.matrix_set = True
@@ -166,7 +166,6 @@ class MessageHandler:
     def _handle_tracker_poses(self, data):
         """Handle tracker pose updates."""
         poses = data['poses']
-        print(poses[2][0], poses[2][1], poses[2][1])
         # Convert angles to degrees
         self.dashboard.probe_location = (
             poses[0][1], -poses[0][2], -poses[0][0],
