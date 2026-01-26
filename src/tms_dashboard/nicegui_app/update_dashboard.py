@@ -1,6 +1,7 @@
 import numpy as np
 
-from .styles import change_color, change_icon, change_label, get_status
+from tms_dashboard.utils.signal_processing import set_apply_baseline_all
+from tms_dashboard.nicegui_app.styles import change_color, change_icon, change_label, get_status
 
 class UpdateDashboard:
     def __init__(self, dashboard, emg_connection):
@@ -91,14 +92,14 @@ class UpdateDashboard:
         # Update the plot widget
         dashboard.displacement_plot.update()
     
-    def update_mep_plot(self):
+    def update_mep_plot(self, num_windows=5):
         """Update MEP plot with current history data.
         
         Args:
             dashboard: DashboardState instance
         """
         mep_history = list(self.emg_connection.get_triggered_window())
-        if mep_history == self.dashboard.mep_history:
+        if np.array_equal(mep_history, self.dashboard.mep_history):
             return
         
         if len(mep_history) == 0:
@@ -107,23 +108,34 @@ class UpdateDashboard:
         dashboard = self.dashboard
         mep_sampling_rate = dashboard.mep_sampling_rate = self.emg_connection.get_sampling_rate()
         
+        # Aplicar baseline entre 5-20ms
+        t_min_ms = self.emg_connection.t_min * 1000
+        t_max_ms = self.emg_connection.t_max * 1000
+        
+        mep_history = set_apply_baseline_all(
+            baseline_start_ms=5,      # Início do baseline em 5ms
+            baseline_end_ms=20,        # Fim do baseline em 20ms
+            signal_start_ms=t_min_ms,  # Sinal começa em -10ms
+            signal_end_ms=t_max_ms,    # Sinal termina em 40ms
+            data_windows=mep_history[-num_windows:], 
+            sampling_rate=mep_sampling_rate
+        )
+
         dashboard.mep_history = mep_history
         ax = dashboard.mep_ax
         ax.clear()
 
-        t_min, tmax = self.emg_connection.t_min *1000, self.emg_connection.t_max *1000
-        # t_ms sempre de -10 a 40 ms, número de pontos baseado nas amostras
-        t_ms = np.linspace(t_min, tmax, len(mep_history[0]))
+        t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
 
         ax.set_xlabel('Time (ms)', fontsize=10)
         ax.set_ylabel('MEP amplitude (uV)', fontsize=10)
         ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
         ax.set_facecolor('#fafafa')
 
-        for i, mep in enumerate(mep_history[-5:]):
+        for i, mep in enumerate(mep_history[:-1]):
             ax.plot(t_ms, mep, color='gray', alpha=0.5, linewidth=2.5, label='Trial' if i == 0 else None)
         
-        ax.plot(t_ms, np.mean(mep_history[-5:], axis=0), color='#ef4444', linewidth=2.5, label='Mean')
+        ax.plot(t_ms, mep_history[-1], color='#ef4444', alpha=1, linewidth=2.5, label='Last')
         ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
         
         # Update the plot widget
