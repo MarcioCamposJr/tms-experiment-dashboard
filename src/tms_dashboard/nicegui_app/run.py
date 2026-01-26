@@ -6,12 +6,12 @@ import threading
 import time
 from nicegui import ui
 
-from ..config import DEFAULT_HOST, DEFAULT_PORT, NICEGUI_PORT
-from ..core.dashboard_state import DashboardState
-from ..core.components.socket_client import SocketClient
-from ..core.message_handler import MessageHandler
-from .update_dashboard import UpdateDashboard
-from .components import create_header, create_dashboard_tabs
+from tms_dashboard.config import DEFAULT_HOST, DEFAULT_PORT, NICEGUI_PORT
+from tms_dashboard.core.dashboard_state import DashboardState
+from tms_dashboard.core.modules.socket_client import SocketClient
+from tms_dashboard.core.message_handler import MessageHandler
+from tms_dashboard.nicegui_app.update_dashboard import UpdateDashboard
+from tms_dashboard.nicegui_app.ui import create_header, create_dashboard_tabs
 # Global shared instances (persist across all sessions)
 dashboard = DashboardState()
 socket_client = SocketClient(f"http://{DEFAULT_HOST}:{DEFAULT_PORT}")

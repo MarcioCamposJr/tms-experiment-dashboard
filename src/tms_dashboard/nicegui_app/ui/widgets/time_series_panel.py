@@ -5,7 +5,7 @@
 from nicegui import ui
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from ....core.dashboard_state import DashboardState
+from tms_dashboard.core.dashboard_state import DashboardState
 
 
 def create_time_series_panel(dashboard: DashboardState):

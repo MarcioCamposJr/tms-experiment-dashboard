@@ -8,6 +8,11 @@ Priority: NiceGUI → Streamlit
 """
 
 import sys
+from pathlib import Path
+
+# Add src directory to Python path
+src_dir = Path(__file__).parent / "src"
+sys.path.insert(0, str(src_dir))
 
 
 def main():
@@ -19,7 +24,7 @@ def main():
     
     # Try NiceGUI first
     try:
-        from src.tms_dashboard.nicegui_app.run import main as nicegui_run
+        from tms_dashboard.nicegui_app.run import main as nicegui_run
         nicegui_run()
         return
         
@@ -29,7 +34,7 @@ def main():
     
     # Fallback to Streamlit
     try:
-        from src.tms_dashboard.streamlit_app.run import main as streamlit_run
+        from tms_dashboard.streamlit_app.run import main as streamlit_run
         streamlit_run()
         return
         

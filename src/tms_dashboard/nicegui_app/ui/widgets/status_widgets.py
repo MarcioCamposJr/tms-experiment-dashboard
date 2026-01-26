@@ -3,7 +3,7 @@
 """Status widgets panel - consolidates all status displays."""
 
 from nicegui import ui
-from ....core.dashboard_state import DashboardState
+from tms_dashboard.core.dashboard_state import DashboardState
 
 
 def create_status_widgets(dashboard: DashboardState):
