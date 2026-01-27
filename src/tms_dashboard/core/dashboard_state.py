@@ -13,7 +13,7 @@ class DashboardState:
     """Central state object for the TMS experiment dashboard.
     
     This class holds all state information including:
-    - Connection status (project, camera, robot, TMS)
+    - Connection status (project, camera, robot)
     - Image and tracker fiducials
     - Navigation data (locations, displacements)
     - Experiment metadata
@@ -27,7 +27,7 @@ class DashboardState:
         self.project_set = False
         self.camera_set = False
         self.robot_set = False
-        self.tms_set = False
+        #self.tms_set = False                              aqui
         
         # Image fiducials (set in software)
         self.image_NA_set = False  # Nasion
@@ -49,15 +49,18 @@ class DashboardState:
         self.target_set = False
         self.robot_moving = False
         self.at_target = False
-        self.trials_started = False
+        #self.trials_started = False
         
         # Navigation position/orientation data (x, y, z, rx, ry, rz)
         self.displacement = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
-        self.module_displacement = 0.0
+        self.module_distance = 0.0
         self.probe_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.head_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.coil_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.target_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
+
+        # Force sensor
+        self.force = 0.0
         
         # Displacement history for time series plotting (x, y, z only)
         self.max_history_length = 100  # Maximum number of samples to keep

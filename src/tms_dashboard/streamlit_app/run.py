@@ -68,8 +68,8 @@ def main():
         st.metric("Camera", "✅" if dashboard.camera_set else "❌")
     with col3:
         st.metric("Robot", "✅" if dashboard.robot_set else "❌")
-    with col4:
-        st.metric("TMS", "✅" if dashboard.tms_set else "❌")
+    # with col4:
+    #     st.metric("TMS", "✅" if dashboard.tms_set else "❌")                       aqui
     
     # Auto refresh
     if st.button("🔄 Refresh Status"):

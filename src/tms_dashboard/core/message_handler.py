@@ -121,7 +121,10 @@ class MessageHandler:
             case "Press navigation button":
                 self.dashboard.navigation_button_pressed = data["cond"]
                 print(data["cond"])
-    
+
+            case "Robot to Neuronavigation: Send force sensor data":
+                self._handle_force(data)
+
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
         if data == "":
@@ -175,3 +178,6 @@ class MessageHandler:
         # Update displacement history for plotting
         self.dashboard.add_displacement_sample()
 
+    def _handle_force(self, data):
+        """Handle sensor force update."""
+        self.dashboard.force = data["force_feedback"]

@@ -5,6 +5,7 @@
 import threading
 import time
 from nicegui import ui
+import traceback
 
 from ..config import DEFAULT_HOST, DEFAULT_PORT, NICEGUI_PORT
 from ..core.dashboard_state import DashboardState
@@ -44,7 +45,7 @@ def start_background_services():
                 message_handler.process_messages()
                 update_dashboard.update()
             except Exception:
-                pass
+                traceback.print_exc()
     
     # Start message processing thread
     threading.Thread(target=process_messages_loop, daemon=True, name="MessageProcessor").start()

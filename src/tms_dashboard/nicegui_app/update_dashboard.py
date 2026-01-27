@@ -21,7 +21,7 @@ class UpdateDashboard:
         change_color(dashboard, "project", get_status(dashboard.project_set))
         change_color(dashboard, "camera", get_status(dashboard.camera_set))
         change_color(dashboard, "robot", get_status(dashboard.robot_set))
-        change_color(dashboard, "tms", get_status(dashboard.tms_set))
+      #  change_color(dashboard, "tms", get_status(dashboard.tms_set))                  
         change_color(dashboard, "probe", get_status(dashboard.probe_visible))
         change_color(dashboard, "head", get_status(dashboard.head_visible))
         change_color(dashboard, "coil", get_status(dashboard.coil_visible))

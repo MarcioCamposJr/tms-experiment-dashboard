@@ -10,10 +10,10 @@ def create_status_widgets(dashboard: DashboardState):
     """Create consolidated status panel with all status sections.
     
     Contains:
-    - Status: Project, Robot, Camera, TMS
+    - Connection: Project, Robot, Camera
     - Markers: Head, Coil, Probe
     - Fiducials: Image & Tracker
-    - Robot: Target, Coil, Moving, Trials
+    - Status: Target, Coil, Moving Robot
     - Indicators: Distance, Angle, Force
     
     Args:
@@ -21,7 +21,7 @@ def create_status_widgets(dashboard: DashboardState):
     """
     # Status section - 2x2 grid (horizontal layout)
     with ui.column().style('margin-bottom: 5px;'):
-        ui.label('Status').style('font-size: 1.3rem; font-weight: 600; color: #6B6B6B; margin-bottom: 2px;')
+        ui.label('Connection').style('font-size: 1.3rem; font-weight: 600; color: #6B6B6B; margin-bottom: 2px;')
         
         with ui.row().style('gap: 2.5rem; flex: 1; align-items: center;'):
             with ui.row().style('gap: 5px;'):
@@ -39,11 +39,11 @@ def create_status_widgets(dashboard: DashboardState):
                 label = ui.label('Camera').style('font-size: 1.0rem; color: #9ca3af;')
                 dashboard.__dict__['icon_camera'] = icon
                 dashboard.__dict__['label_camera'] = label
-            with ui.row().style('gap: 5px;'):
-                icon = ui.icon('offline_bolt').style('font-size: 22px; color: #9ca3af;')
-                label = ui.label('TMS').style('font-size: 1.0rem; color: #9ca3af;')
-                dashboard.__dict__['icon_tms'] = icon
-                dashboard.__dict__['label_tms'] = label
+            # with ui.row().style('gap: 5px;'):
+            #     icon = ui.icon('offline_bolt').style('font-size: 22px; color: #9ca3af;')               aqui
+            #     label = ui.label('TMS').style('font-size: 1.0rem; color: #9ca3af;')
+            #     dashboard.__dict__['icon_tms'] = icon
+            #     dashboard.__dict__['label_tms'] = label
     
     ui.separator().style('margin: 4px 0;')
     
@@ -101,7 +101,7 @@ def create_status_widgets(dashboard: DashboardState):
     
     # Robot section - 2x2 grid
     with ui.column().style('gap: 1px;'):
-        ui.label('Robot').style('font-size: 1.3rem; font-weight: 600; color: #6B6B6B; margin-bottom: 2px;')
+        ui.label('Status').style('font-size: 1.3rem; font-weight: 600; color: #6B6B6B; margin-bottom: 2px;')
         
         with ui.row().style('gap: 2.5rem; margin-bottom: 2px; width: 100%;'):
             with ui.row().style('gap: 3px;'):
@@ -118,15 +118,15 @@ def create_status_widgets(dashboard: DashboardState):
         
             with ui.row().style('gap: 3px;'):
                 icon = ui.icon('sync').style('font-size: 22px; color: #9ca3af;')
-                label = ui.label('Moving').style('font-size: 1.0rem; color: #9ca3af;')
+                label = ui.label('Moving Robot').style('font-size: 1.0rem; color: #9ca3af;')
                 dashboard.__dict__['icon_moving'] = icon
                 dashboard.__dict__['label_moving'] = label
             
-            with ui.row().style('gap: 3px;'):
-                icon = ui.icon('dataset').style('font-size: 22px; color: #9ca3af;')
-                label = ui.label('Trials').style('font-size: 1.0rem; color: #9ca3af;')
-                dashboard.__dict__['icon_trials'] = icon
-                dashboard.__dict__['label_trials'] = label
+            # with ui.row().style('gap: 3px;'):
+            #     icon = ui.icon('dataset').style('font-size: 22px; color: #9ca3af;')
+            #     label = ui.label('Trials').style('font-size: 1.0rem; color: #9ca3af;')
+            #     dashboard.__dict__['icon_trials'] = icon
+            #     dashboard.__dict__['label_trials'] = label
     
     ui.separator().style('margin: 4px 0;')
     
