@@ -8,7 +8,7 @@ from typing import Optional
 from .dashboard_state import DashboardState
 from .modules.socket_client import SocketClient
 from tms_dashboard.utils.constants import robot_messages
-
+import time
 
 class MessageHandler:
     """Processes messages from socket client and updates dashboard state."""
@@ -52,6 +52,7 @@ class MessageHandler:
             topic: Message topic string
             data: Message data payload
         """
+
         match topic:
             case 'Set image fiducial':
                 self._handle_image_fiducial(data)
@@ -140,6 +141,9 @@ class MessageHandler:
             
             case "Press navigation button":
                 self.dashboard.navigation_button_pressed = data["cond"]
+            
+            case "Robot to Neuronavigation: Send force sensor data":
+                self.dashboard.force = data["force_feedback"] 
     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""

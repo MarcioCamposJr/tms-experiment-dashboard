@@ -13,7 +13,7 @@ class DashboardState:
     """Central state object for the TMS experiment dashboard.
     
     This class holds all state information including:
-    - Connection status (project, camera, robot, TMS)
+    - Connection status (project, camera, robot)
     - Image and tracker fiducials
     - Navigation data (locations, displacements)
     - Experiment metadata

@@ -54,7 +54,7 @@ class UpdateDashboard:
         """Update all dashboard indicators."""
         dashboard = self.dashboard
         change_label(dashboard, "distance", str(round(dashboard.module_displacement, 2)) + " mm")
-        change_label(dashboard, "force", dashboard.force)
+        change_label(dashboard, "force", str(round(dashboard.force, 2)) + " N")
 
     def update_displacement_plot(self):
         """Update displacement plot with current history data.
