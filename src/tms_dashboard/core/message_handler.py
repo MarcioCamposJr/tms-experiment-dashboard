@@ -6,8 +6,8 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 from typing import Optional
 from .dashboard_state import DashboardState
-from .components.socket_client import SocketClient
-from ..utils.constants import robot_messages
+from .modules.socket_client import SocketClient
+from tms_dashboard.utils.constants import robot_messages
 
 
 class MessageHandler:
@@ -140,7 +140,6 @@ class MessageHandler:
             
             case "Press navigation button":
                 self.dashboard.navigation_button_pressed = data["cond"]
-                print(data["cond"])
     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""

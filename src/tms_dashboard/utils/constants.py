@@ -33,7 +33,7 @@ robot_messages = {
 
 # UI label texts
 UI_LABELS = [
-    'Project', 'Robot', 'Camera', 'TMS',
+    'Project', 'Robot', 'Camera',
     'Left Fiducial', 'Nasion', 'Right Fiducial',
     'Left Tragus', 'Nose', 'Right Tragus',
     'Target', 'Coil', 'Moving', 'Trials',

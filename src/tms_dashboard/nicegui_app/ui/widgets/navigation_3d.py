@@ -4,8 +4,8 @@
 
 from nicegui import ui
 import math
-from ...core.dashboard_state import DashboardState
-from ...utils.coordinate_transform import InVesaliusToThreeJS
+from tms_dashboard.core.dashboard_state import DashboardState
+from tms_dashboard.utils.coordinate_transform import InVesaliusToThreeJS
 
 class CoordinateSystem(ui.scene.group):
 

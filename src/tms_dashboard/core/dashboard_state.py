@@ -58,14 +58,23 @@ class DashboardState:
         self.head_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.coil_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
         self.target_location = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
+        self.force = 0.0
         
         # Displacement history for time series plotting (x, y, z only)
+        self.displacement_ax = None
+        self.displacement_plot = None
         self.max_history_length = 100  # Maximum number of samples to keep
         self.displacement_history_x = deque(maxlen=self.max_history_length)
         self.displacement_history_y = deque(maxlen=self.max_history_length)
         self.displacement_history_z = deque(maxlen=self.max_history_length)
         self.displacement_time_history = deque(maxlen=self.max_history_length)
         self._start_time = time.time()  # Reference time for plotting
+
+        # Motor evoked potentials plots and history
+        self.mep_ax = None
+        self.mep_plot = None
+        self.mep_history = []
+        self.mep_sampling_rate = None
         
         # Experiment metadata with default values
         self.experiment_name = 'Paired pulse, dual site, bilateral, leftM1-rightPMv'
