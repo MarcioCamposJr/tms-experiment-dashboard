@@ -82,28 +82,50 @@ def section_title_style() -> str:
 
 def change_color(dashboard, target_label: str, new_status: str, colors: tuple = None):
     """Change the color of a label and its associated icon.
-    
-    Apenas duas cores são usadas:
-    - 'success': Verde (#10b981) - Estado ativo/conectado
-    - 'neutral': Cinza (#9ca3af) - Estado inativo/desconectado
-    
+
+    Supports labels/icons (original behavior) and the navigation button.
+
     Args:
         dashboard: DashboardState instance containing label and icon references
-        target_label: Name of the label to update (will be converted to lowercase)
+        target_label: Name of the label/button to update
         new_status: Status - 'success' or 'neutral'
+        colors: Optional tuple (active_color, inactive_color) for buttons
     """
+    # Special handling for the START NAVIGATION button
+    if target_label.lower().replace(' ', '_') == 'navigation_button' and hasattr(dashboard, 'navigation_button_ui'):
+        button = getattr(dashboard, 'navigation_button_ui')
+        if button is not None and colors is not None:
+            # colors tuple: (active_color, inactive_color)
+            target_color = colors[0] if new_status == 'success' else colors[1]
+            try:
+                # Preferred API
+                if hasattr(button, 'set_background_color'):
+                    button.set_background_color(target_color)
+                else:
+                    # Fallback: inline style
+                    button.style(f'background-color: {target_color};')
+                try:
+                    button.update()
+                except Exception:
+                    pass
+            except Exception:
+                # Safely ignore styling errors
+                pass
+        return
+
+    # Fallback: original label/icon logic
     if colors is None:
-        color = '#10b981' if new_status == 'success' else '#9ca3af'  # Verde ou Cinza
+        color = '#10b981' if new_status == 'success' else '#9ca3af'
     else:
         color = colors[0] if new_status == 'success' else colors[1]
-        
+
     # Update label if exists in dashboard
     label_key = f'label_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, label_key):
         label = getattr(dashboard, label_key)
         label.style(f'font-size: 1.0rem; color: {color}; font-weight: 500;')
         label.update()
-    
+
     # Update associated icon if exists
     icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, icon_key):

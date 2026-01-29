@@ -50,6 +50,7 @@ class UpdateDashboard:
         change_color(dashboard, "coil", get_status(dashboard.at_target))
         # change_color(dashboard, "trials", get_status(dashboard.trials_started))
 
+
     def update_indicators(self):
         """Update all dashboard indicators."""
         dashboard = self.dashboard
@@ -144,4 +145,5 @@ class UpdateDashboard:
     def update_buttons(self):
         dashboard = self.dashboard
         """Update all dashboard buttons."""
-        change_color(dashboard, "navigation_button", get_status(dashboard.navigation_button_pressed), ("#21BA45", "#C10015"))
+        status = get_status(dashboard.navigation_button_pressed)
+        change_color(dashboard, "navigation_button", status, ("#21BA45", "#9ca3af"))

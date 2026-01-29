@@ -138,9 +138,14 @@ class MessageHandler:
                 else:
                     self.dashboard.at_target = False
             
-            case "Press navigation button":
-                self.dashboard.navigation_button_pressed = data["cond"]
-    
+            case "Start navigation":
+                # Start navigation = button pressed (True)
+                self.dashboard.navigation_button_pressed = True
+
+            case "Stop navigation":
+                # Stop navigation = button not pressed (False)
+                self.dashboard.navigation_button_pressed = False
+              
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
         if data == "":

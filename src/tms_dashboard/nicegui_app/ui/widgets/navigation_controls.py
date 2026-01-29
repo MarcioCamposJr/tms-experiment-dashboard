@@ -22,12 +22,18 @@ def create_navigation_controls(dashboard: DashboardState):
             ui.label('Navigation Controls').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
             
             # Main control button - Start/Stop (highlighted)
-            ui.button('START NAVIGATION', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
+            nav_button = ui.button('START NAVIGATION', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
                 'font-size: 1rem; '
                 'font-weight: 600; '
                 'padding: 16px; '
                 'min-height: 60px;'
             )
+            # Save UI reference so the updater can change its color
+            try:
+                dashboard.navigation_button_ui = nav_button
+            except Exception:
+                # dashboard may be a simple object without that attribute in some tests
+                pass
             
             ui.separator().style('margin: 4px 0;')
             
