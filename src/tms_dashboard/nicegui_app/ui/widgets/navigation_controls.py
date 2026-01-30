@@ -22,7 +22,7 @@ def create_navigation_controls(dashboard: DashboardState):
             ui.label('Navigation Controls').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
             
             # Main control button - Start/Stop (highlighted)
-            nav_button = ui.button('START NAVIGATION', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
+            nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
                 'font-size: 1rem; '
                 'font-weight: 600; '
                 'padding: 16px; '
@@ -38,7 +38,26 @@ def create_navigation_controls(dashboard: DashboardState):
             ui.separator().style('margin: 4px 0;')
             
             # Create Target button
-            ui.button('Create Target', icon='add_location_alt').props('outlined color=primary').classes('w-full').style(
+            def _create_target_click(e=None):
+                # Import inside handler to avoid circular imports
+                try:
+                    from tms_dashboard.nicegui_app.run import socket_client
+                except Exception as exc:
+                    print(f"[UI] Could not import socket_client: {exc}")
+                    ui.notify('Error: connection not available', position='top')
+                    return
+
+                if not socket_client.is_connected:
+                    ui.notify('Relay server not connected', position='top')
+                    return
+
+                success = socket_client.send_create_marker()
+                if success:
+                    ui.notify('Create target sent', position='top')
+                else:
+                    ui.notify('Failed to send Create marker', position='top')
+
+            ui.button('Create Target', icon='add_location_alt', on_click=_create_target_click).props('outlined color=primary').classes('w-full').style(
                 'font-size: 0.95rem; '
                 'min-height: 50px;'
             )
