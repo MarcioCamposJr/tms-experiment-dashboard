@@ -28,7 +28,7 @@ def create_time_series_panel(dashboard: DashboardState):
                 
                 ax_mep.set_xlabel('Time (ms)', fontsize=10)
                 ax_mep.set_ylabel('MEP amplitude (uV)', fontsize=10)
-                ax_mep.set_xlim(-10, 40)  # Escala fixa de -10 a 40 ms
+                ax_mep.set_xlim(-5, 40)  # Escala fixa de -10 a 40 ms
                 ax_mep.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
                 ax_mep.set_facecolor('#fafafa')
                 fig_mep.patch.set_facecolor('#ffffff')

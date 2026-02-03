@@ -32,14 +32,14 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
         
         # ===== ROW 1 (65% height): 3D Navigation + Status Items =====
         with ui.row().classes('w-full').style(
-            'flex: 65; '
+            'flex: 55; '
             'min-height: 0; '
             'align-items: stretch; '
             'gap: 0;'
         ):
             # 3D Navigation (60% width)
             with ui.card().props('flat').style(
-                'flex: 60; '
+                'flex: 50; '
                 'padding: 12px; '
                 'display: flex; '
                 'flex-direction: column; '
@@ -54,7 +54,7 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
             
             # Status Items (40% width)
             with ui.card().props('flat').style(
-                'flex: 40; '
+                'flex: 50; '
                 'padding: 8px; '
                 'overflow: hidden; '
                 'height: 100%; '
@@ -66,7 +66,7 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
         
         # ===== ROW 2 (35% height): Time Series Graph + Navigation Controls =====
         with ui.row().classes('w-full').style(
-            'flex: 35; '
+            'flex: 45; '
             'min-height: 0; '
             'align-items: stretch; '
             'gap: 0;'
