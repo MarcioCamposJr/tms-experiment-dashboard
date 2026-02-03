@@ -93,23 +93,23 @@ def change_color(dashboard, target_label: str, new_status: str, colors: tuple = 
         new_status: Status - 'success' or 'neutral'
     """
     if colors is None:
-        color = '#10b981' if new_status == 'success' else '#9ca3af'  # Verde ou Cinza
+        color = '#10b981' if new_status == 'success' else "#ce6262"  # Verde ou Cinza
     else:
         color = colors[0] if new_status == 'success' else colors[1]
-        
+
     # Update label if exists in dashboard
     label_key = f'label_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, label_key):
         label = getattr(dashboard, label_key)
-        label.style(f'font-size: 1.0rem; color: {color}; font-weight: 500;')
+        label.style(f'font-size: 1.15rem; color: {color}; font-weight: 500;')
         label.update()
     
     # Update associated icon if exists
     icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, icon_key):
         icon = getattr(dashboard, icon_key)
-        # icon.style(f'font-size: 22px; color: {color};')
-        # icon.update()
+        icon.style(f'font-size: 25px; color: {color};')
+        icon.update()
 
 def change_icon(dashboard, target_label: str, new_status: str):
     """Change the icon of a label based on status."""

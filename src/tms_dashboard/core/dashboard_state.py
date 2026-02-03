@@ -27,7 +27,6 @@ class DashboardState:
         self.project_set = False
         self.camera_set = False
         self.robot_set = False
-        self.tms_set = False
         
         # Image fiducials (set in software)
         self.image_NA_set = False  # Nasion
