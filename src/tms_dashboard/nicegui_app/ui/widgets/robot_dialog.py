@@ -7,8 +7,6 @@ from tms_dashboard.core.dashboard_state import DashboardState
 from tms_dashboard.core.robot_config_state import (
     RobotConfigState, 
     PIDParams,
-    SITE_OPTIONS, 
-    ROBOT_OPTIONS, 
     MOVEMENT_ALGORITHM_OPTIONS
 )
 
@@ -26,8 +24,8 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
     """
     global robot_config
     
-    with ui.dialog().props('persistent maximized') as dialog:
-        with ui.card().style('width: 900px; max-width: 95vw; max-height: 90vh; overflow-y: auto;'):
+    with ui.dialog().props('persistent') as dialog:
+        with ui.card().style('width: 950px; max-width: 95vw; max-height: 90vh; overflow-y: auto;'):
             # Dialog header
             with ui.row().classes('w-full items-center justify-between mb-2 sticky top-0 bg-white z-10 pb-2'):
                 ui.label('Robot Configuration').style(
@@ -40,23 +38,8 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
             # Store input references for saving
             inputs = {}
             
-            # ===== SECTION 1: Site & Robot Selection =====
-            with ui.expansion('Site & Robot', icon='precision_manufacturing', value=True).classes('w-full').style('margin-top: 8px;'):
-                with ui.grid(columns=2).classes('w-full gap-4'):
-                    inputs['site'] = ui.select(
-                        label='Site', 
-                        options=SITE_OPTIONS, 
-                        value=robot_config.site
-                    ).classes('w-full').props('outlined dense')
-                    
-                    inputs['robot'] = ui.select(
-                        label='Robot Type', 
-                        options=ROBOT_OPTIONS, 
-                        value=robot_config.robot
-                    ).classes('w-full').props('outlined dense')
-            
-            # ===== SECTION 2: Sensors =====
-            with ui.expansion('Sensors', icon='sensors').classes('w-full'):
+            # ===== SECTION 1: Sensors =====
+            with ui.expansion('Sensors', icon='sensors', value=True).classes('w-full').style('margin-top: 8px;'):
                 with ui.grid(columns=3).classes('w-full gap-4 items-center'):
                     inputs['use_force_sensor'] = ui.switch(
                         'Use Force Sensor', 
@@ -140,39 +123,47 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
             
             # ===== SECTION 6: PID Tuning =====
             with ui.expansion('PID Tuning', icon='tune', value=False).classes('w-full'):
-                # Position PID (X, Y, Z)
-                ui.label('Position Control').style('font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;')
-                
                 pid_inputs = {}
                 
-                with ui.grid(columns=4).classes('w-full gap-2 mb-4'):
+                # Translation PID (X, Y, Z)
+                ui.label('Translation Control (X, Y, Z)').style('font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #10b981;')
+                
+                with ui.grid(columns=6).classes('w-full gap-2 mb-4'):
                     ui.label('Axis').style('font-weight: 600; color: #6b7280;')
                     ui.label('Kp').style('font-weight: 600; color: #6b7280;')
                     ui.label('Ki').style('font-weight: 600; color: #6b7280;')
                     ui.label('Kd').style('font-weight: 600; color: #6b7280;')
+                    ui.label('Stiffness').style('font-weight: 600; color: #6b7280;')
+                    ui.label('Damping').style('font-weight: 600; color: #6b7280;')
                     
                     for axis, pid in [('X', robot_config.pid_x), ('Y', robot_config.pid_y), ('Z', robot_config.pid_z)]:
                         ui.label(axis).style('font-weight: 600; color: #10b981; align-self: center;')
-                        pid_inputs[f'{axis.lower()}_kp'] = ui.number(value=pid.kp, min=0, max=100, step=0.1, format='%.2f').props('outlined dense').classes('w-full')
-                        pid_inputs[f'{axis.lower()}_ki'] = ui.number(value=pid.ki, min=0, max=100, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
-                        pid_inputs[f'{axis.lower()}_kd'] = ui.number(value=pid.kd, min=0, max=100, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_kp'] = ui.number(value=pid.kp, min=0, max=10, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_ki'] = ui.number(value=pid.ki, min=0, max=10, step=0.001, format='%.4f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_kd'] = ui.number(value=pid.kd, min=0, max=10, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_stiffness'] = ui.number(value=pid.stiffness, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_damping'] = ui.number(value=pid.damping, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                 
                 ui.separator().classes('my-2')
                 
                 # Rotation PID (RX, RY, RZ)
-                ui.label('Rotation Control').style('font-weight: 600; font-size: 0.95rem; margin-bottom: 8px;')
+                ui.label('Rotation Control (RX, RY, RZ)').style('font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #f59e0b;')
                 
-                with ui.grid(columns=4).classes('w-full gap-2'):
+                with ui.grid(columns=6).classes('w-full gap-2'):
                     ui.label('Axis').style('font-weight: 600; color: #6b7280;')
                     ui.label('Kp').style('font-weight: 600; color: #6b7280;')
                     ui.label('Ki').style('font-weight: 600; color: #6b7280;')
                     ui.label('Kd').style('font-weight: 600; color: #6b7280;')
+                    ui.label('Stiffness').style('font-weight: 600; color: #6b7280;')
+                    ui.label('Damping').style('font-weight: 600; color: #6b7280;')
                     
                     for axis, pid in [('RX', robot_config.pid_rx), ('RY', robot_config.pid_ry), ('RZ', robot_config.pid_rz)]:
                         ui.label(axis).style('font-weight: 600; color: #f59e0b; align-self: center;')
-                        pid_inputs[f'{axis.lower()}_kp'] = ui.number(value=pid.kp, min=0, max=100, step=0.1, format='%.2f').props('outlined dense').classes('w-full')
-                        pid_inputs[f'{axis.lower()}_ki'] = ui.number(value=pid.ki, min=0, max=100, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
-                        pid_inputs[f'{axis.lower()}_kd'] = ui.number(value=pid.kd, min=0, max=100, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_kp'] = ui.number(value=pid.kp, min=0, max=10, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_ki'] = ui.number(value=pid.ki, min=0, max=10, step=0.001, format='%.4f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_kd'] = ui.number(value=pid.kd, min=0, max=10, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_stiffness'] = ui.number(value=pid.stiffness, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
+                        pid_inputs[f'{axis.lower()}_damping'] = ui.number(value=pid.damping, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                 
                 inputs['pid'] = pid_inputs
             
@@ -202,8 +193,6 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
                 global robot_config
                 
                 # Update robot_config from inputs
-                robot_config.site = inputs['site'].value
-                robot_config.robot = inputs['robot'].value
                 robot_config.use_force_sensor = inputs['use_force_sensor'].value
                 robot_config.use_pressure_sensor = inputs['use_pressure_sensor'].value
                 robot_config.com_port_pressure_sensor = inputs['com_port_pressure_sensor'].value
@@ -219,14 +208,32 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
                 robot_config.wait_for_keypress_before_movement = inputs['wait_for_keypress_before_movement'].value
                 robot_config.verbose = inputs['verbose'].value
                 
-                # Update PID params
+                # Update PID params with stiffness/damping
                 pid = inputs['pid']
-                robot_config.pid_x = PIDParams(kp=pid['x_kp'].value, ki=pid['x_ki'].value, kd=pid['x_kd'].value)
-                robot_config.pid_y = PIDParams(kp=pid['y_kp'].value, ki=pid['y_ki'].value, kd=pid['y_kd'].value)
-                robot_config.pid_z = PIDParams(kp=pid['z_kp'].value, ki=pid['z_ki'].value, kd=pid['z_kd'].value)
-                robot_config.pid_rx = PIDParams(kp=pid['rx_kp'].value, ki=pid['rx_ki'].value, kd=pid['rx_kd'].value)
-                robot_config.pid_ry = PIDParams(kp=pid['ry_kp'].value, ki=pid['ry_ki'].value, kd=pid['ry_kd'].value)
-                robot_config.pid_rz = PIDParams(kp=pid['rz_kp'].value, ki=pid['rz_ki'].value, kd=pid['rz_kd'].value)
+                robot_config.pid_x = PIDParams(
+                    kp=pid['x_kp'].value, ki=pid['x_ki'].value, kd=pid['x_kd'].value,
+                    stiffness=pid['x_stiffness'].value, damping=pid['x_damping'].value
+                )
+                robot_config.pid_y = PIDParams(
+                    kp=pid['y_kp'].value, ki=pid['y_ki'].value, kd=pid['y_kd'].value,
+                    stiffness=pid['y_stiffness'].value, damping=pid['y_damping'].value
+                )
+                robot_config.pid_z = PIDParams(
+                    kp=pid['z_kp'].value, ki=pid['z_ki'].value, kd=pid['z_kd'].value,
+                    stiffness=pid['z_stiffness'].value, damping=pid['z_damping'].value
+                )
+                robot_config.pid_rx = PIDParams(
+                    kp=pid['rx_kp'].value, ki=pid['rx_ki'].value, kd=pid['rx_kd'].value,
+                    stiffness=pid['rx_stiffness'].value, damping=pid['rx_damping'].value
+                )
+                robot_config.pid_ry = PIDParams(
+                    kp=pid['ry_kp'].value, ki=pid['ry_ki'].value, kd=pid['ry_kd'].value,
+                    stiffness=pid['ry_stiffness'].value, damping=pid['ry_damping'].value
+                )
+                robot_config.pid_rz = PIDParams(
+                    kp=pid['rz_kp'].value, ki=pid['rz_ki'].value, kd=pid['rz_kd'].value,
+                    stiffness=pid['rz_stiffness'].value, damping=pid['rz_damping'].value
+                )
                 
                 # Validate
                 is_valid, error_msg = robot_config.validate()

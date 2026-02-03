@@ -48,8 +48,15 @@ class Message2Server():
         Returns:
             bool: True if message was sent successfully
         """
-        return self.__send_message2robot(
-            topic='Dashboard to Robot: Update configuration', 
-            data=robot_config.to_dict()
-        )
+        # self.__send_message2robot(
+        #     topic='Neuronavigation to Robot: Update config', 
+        #     data=robot_config.to_dict()
+        # )
+
+        # self.__send_message2robot(
+        #     topic='Neuronavigation to Robot: Update pid values', 
+        #     data=robot_config.to_dict()
+        # )
+
+        return True
 

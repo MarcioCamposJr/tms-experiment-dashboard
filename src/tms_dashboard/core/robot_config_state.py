@@ -6,24 +6,39 @@ from dataclasses import dataclass, field
 from typing import Tuple
 
 # Available options for select fields
-SITE_OPTIONS = ['aalto', 'tubingen', 'usp_coil', 'usp_neurosoft', 'default']
-ROBOT_OPTIONS = ['elfin', 'elfin_new_api', 'dobot', 'ur', 'test']
 MOVEMENT_ALGORITHM_OPTIONS = ['radially_outward', 'directly_upward', 'directly_PID']
 
 
 @dataclass
 class PIDParams:
-    """PID controller parameters for a single axis."""
-    kp: float = 1.0
-    ki: float = 0.0
-    kd: float = 0.0
+    """PID controller parameters for a single axis.
+    
+    Includes standard PID gains plus impedance control parameters.
+    """
+    kp: float = 0.3  # Proportional gain
+    ki: float = 0.01  # Integral gain
+    kd: float = 0.0   # Derivative gain
+    stiffness: float = 0.05  # Impedance stiffness
+    damping: float = 0.02    # Impedance damping
     
     def to_dict(self) -> dict:
-        return {'kp': self.kp, 'ki': self.ki, 'kd': self.kd}
+        return {
+            'kp': self.kp, 
+            'ki': self.ki, 
+            'kd': self.kd,
+            'stiffness': self.stiffness,
+            'damping': self.damping
+        }
     
     @classmethod
     def from_dict(cls, data: dict) -> 'PIDParams':
-        return cls(kp=data.get('kp', 1.0), ki=data.get('ki', 0.0), kd=data.get('kd', 0.0))
+        return cls(
+            kp=data.get('kp', 0.3), 
+            ki=data.get('ki', 0.01), 
+            kd=data.get('kd', 0.0),
+            stiffness=data.get('stiffness', 0.05),
+            damping=data.get('damping', 0.02)
+        )
 
 
 @dataclass 
@@ -38,10 +53,6 @@ class RobotConfigState:
     - Position and rotation thresholds
     - PID tuning for each axis
     """
-    
-    # Site and robot selection
-    site: str = 'usp_coil'
-    robot: str = 'elfin'
     
     # Sensor configuration
     use_force_sensor: bool = False
@@ -67,21 +78,21 @@ class RobotConfigState:
     wait_for_keypress_before_movement: bool = False
     verbose: bool = False
     
-    # PID parameters for position (X, Y, Z)
-    pid_x: PIDParams = field(default_factory=PIDParams)
-    pid_y: PIDParams = field(default_factory=PIDParams)
-    pid_z: PIDParams = field(default_factory=PIDParams)
+    # PID parameters for translation (X, Y, Z)
+    # X and Y use default PID (Kp=0.3, Ki=0.01, Kd=0.0)
+    # Z uses different defaults based on sensor mode (handled in UI)
+    pid_x: PIDParams = field(default_factory=lambda: PIDParams(kp=0.3, ki=0.01, kd=0.0))
+    pid_y: PIDParams = field(default_factory=lambda: PIDParams(kp=0.3, ki=0.01, kd=0.0))
+    pid_z: PIDParams = field(default_factory=lambda: PIDParams(kp=0.1, ki=0.0, kd=0.0, stiffness=0.05, damping=0.02))
     
     # PID parameters for rotation (RX, RY, RZ)
-    pid_rx: PIDParams = field(default_factory=PIDParams)
-    pid_ry: PIDParams = field(default_factory=PIDParams)
-    pid_rz: PIDParams = field(default_factory=PIDParams)
+    pid_rx: PIDParams = field(default_factory=lambda: PIDParams(kp=0.3, ki=0.01, kd=0.0))
+    pid_ry: PIDParams = field(default_factory=lambda: PIDParams(kp=0.3, ki=0.01, kd=0.0))
+    pid_rz: PIDParams = field(default_factory=lambda: PIDParams(kp=0.3, ki=0.01, kd=0.0))
     
     def to_dict(self) -> dict:
         """Convert configuration to dictionary for serialization/socket transmission."""
         return {
-            'site': self.site,
-            'robot': self.robot,
             'use_force_sensor': self.use_force_sensor,
             'use_pressure_sensor': self.use_pressure_sensor,
             'com_port_pressure_sensor': self.com_port_pressure_sensor,
@@ -96,7 +107,7 @@ class RobotConfigState:
             'stop_robot_if_head_not_visible': self.stop_robot_if_head_not_visible,
             'wait_for_keypress_before_movement': self.wait_for_keypress_before_movement,
             'verbose': self.verbose,
-            'pid_position': {
+            'pid_translation': {
                 'x': self.pid_x.to_dict(),
                 'y': self.pid_y.to_dict(),
                 'z': self.pid_z.to_dict(),
@@ -111,12 +122,10 @@ class RobotConfigState:
     @classmethod
     def from_dict(cls, data: dict) -> 'RobotConfigState':
         """Create configuration from dictionary."""
-        pid_pos = data.get('pid_position', {})
+        pid_trans = data.get('pid_translation', {})
         pid_rot = data.get('pid_rotation', {})
         
         return cls(
-            site=data.get('site', 'usp_coil'),
-            robot=data.get('robot', 'elfin'),
             use_force_sensor=data.get('use_force_sensor', False),
             use_pressure_sensor=data.get('use_pressure_sensor', False),
             com_port_pressure_sensor=data.get('com_port_pressure_sensor', ''),
@@ -131,9 +140,9 @@ class RobotConfigState:
             stop_robot_if_head_not_visible=data.get('stop_robot_if_head_not_visible', True),
             wait_for_keypress_before_movement=data.get('wait_for_keypress_before_movement', False),
             verbose=data.get('verbose', False),
-            pid_x=PIDParams.from_dict(pid_pos.get('x', {})),
-            pid_y=PIDParams.from_dict(pid_pos.get('y', {})),
-            pid_z=PIDParams.from_dict(pid_pos.get('z', {})),
+            pid_x=PIDParams.from_dict(pid_trans.get('x', {})),
+            pid_y=PIDParams.from_dict(pid_trans.get('y', {})),
+            pid_z=PIDParams.from_dict(pid_trans.get('z', {})),
             pid_rx=PIDParams.from_dict(pid_rot.get('rx', {})),
             pid_ry=PIDParams.from_dict(pid_rot.get('ry', {})),
             pid_rz=PIDParams.from_dict(pid_rot.get('rz', {})),
@@ -145,12 +154,6 @@ class RobotConfigState:
         Returns:
             Tuple of (is_valid, error_message)
         """
-        if self.site not in SITE_OPTIONS:
-            return False, f"Invalid site: {self.site}"
-        
-        if self.robot not in ROBOT_OPTIONS:
-            return False, f"Invalid robot: {self.robot}"
-        
         if self.movement_algorithm not in MOVEMENT_ALGORITHM_OPTIONS:
             return False, f"Invalid movement algorithm: {self.movement_algorithm}"
         
