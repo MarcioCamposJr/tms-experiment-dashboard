@@ -1,8 +1,8 @@
 import numpy as np
 import plotly.graph_objects as go
 
-from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_indexes_fast_tol
-from tms_dashboard.nicegui_app.styles import change_color, change_icon, change_label, get_status, change_button 
+from tms_dashboard.nicegui_app.styles import change_color, change_radio_icon, change_label, get_status, change_button, change_icon, change_progress_ui
+from tms_dashboard.config import IMAGES_DIR
 
 class UpdateDashboard:
     def __init__(self, dashboard, emg_connection):
@@ -30,28 +30,27 @@ class UpdateDashboard:
         change_color(dashboard, "camera", get_status(dashboard.camera_set))
         change_color(dashboard, "robot", get_status(dashboard.robot_set))
 
-        change_color(dashboard, "marker_probe", get_status(dashboard.probe_visible))
-        change_color(dashboard, "marker_head", get_status(dashboard.head_visible))
-        change_color(dashboard, "marker_coil", get_status(dashboard.coil_visible))
+        change_icon(dashboard, "probe", f"{IMAGES_DIR}\icones\stylus_icon_green.png" if dashboard.probe_visible else f"{IMAGES_DIR}\icones\stylus_icon.png")
+        change_icon(dashboard, "head", f"{IMAGES_DIR}\icones\head_icon_green.png" if dashboard.head_visible else f"{IMAGES_DIR}\icones\head_icon.png")
+        change_icon(dashboard, "coil", f"{IMAGES_DIR}\icones\coil_no_handle_icon_green.png" if dashboard.coil_visible else f"{IMAGES_DIR}\icones\coil_no_handle_icon.png")
 
         status = get_status(dashboard.image_fiducials)
         change_color(dashboard, "image_fiducials", status)
-        change_icon(dashboard, "image_fiducials", status)
+        change_radio_icon(dashboard, "image_fiducials", status)
 
         status = get_status(dashboard.tracker_fiducials)
         change_color(dashboard, "tracker_fiducials", status)
-        change_icon(dashboard, "tracker_fiducials", status)
+        change_radio_icon(dashboard, "tracker_fiducials", status)
 
         change_color(dashboard, "target", get_status(dashboard.target_set))
         change_color(dashboard, "moving", get_status(dashboard.robot_moving))
         change_color(dashboard, "coil", get_status(dashboard.at_target))
 
-
     def update_indicators(self):
         """Update all dashboard indicators."""
         dashboard = self.dashboard
         change_label(dashboard, "distance", str(round(dashboard.module_displacement, 2)) + " mm")
-        # change_label(dashboard, "force", str(round(dashboard.force, 2)) + " N")
+        change_progress_ui(dashboard, "force_indicator", round(dashboard.force, 2))
 
     def update_displacement_plot(self):
         """Update displacement plot with current history data.

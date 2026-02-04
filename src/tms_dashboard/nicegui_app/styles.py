@@ -102,17 +102,17 @@ def change_color(dashboard, target_label: str, new_status: str, colors: tuple = 
     label_key = f'label_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, label_key):
         label = getattr(dashboard, label_key)
-        label.style(f'font-size: 1.15rem; color: {color}; font-weight: 500;')
+        label.style(f' color: {color};')
         label.update()
 
     # Update associated icon if exists
     icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, icon_key):
         icon = getattr(dashboard, icon_key)
-        icon.style(f'font-size: 25px; color: {color};')
+        icon.style(f'color: {color};')
         icon.update()
 
-def change_icon(dashboard, target_label: str, new_status: str):
+def change_radio_icon(dashboard, target_label: str, new_status: str):
     """Change the icon of a label based on status."""
     icon_key = f'icon_{target_label.lower().replace(" ", "_")}'
     if hasattr(dashboard, icon_key):
@@ -143,3 +143,19 @@ def change_button(dashboard, target_label: str, new_status: str, colors: tuple =
         # Fallback: inline style
         button.style(f'background-color: {color} !important;')
         button.update()
+
+def change_icon(dashboard, target_label: str, icon_path):
+    image_key = f'image_{target_label.lower().replace(" ", "_")}'
+    if hasattr(dashboard, image_key):
+        image = getattr(dashboard, image_key)
+        if image.source == icon_path:
+            return
+        image.set_source(icon_path)
+        image.force_reload()
+
+def change_progress_ui(dashboard, target_label: str, value):
+    key = f'{target_label.lower().replace(" ", "_")}'
+    if hasattr(dashboard, key):
+        progress_ui = getattr(dashboard, key)
+        if progress_ui.value != value:
+            progress_ui.set_value(value)
