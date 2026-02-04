@@ -74,6 +74,14 @@ class DashboardState:
         self.displacement_time_history = deque(maxlen=self.max_history_length)
         self._start_time = time.time()  # Reference time for plotting
 
+        # Rotation history for time series plotting (rx, ry, rz in degrees)
+        self.rotation_ax = None
+        self.rotation_plot = None
+        self.rotation_history_rx = deque(maxlen=self.max_history_length)
+        self.rotation_history_ry = deque(maxlen=self.max_history_length)
+        self.rotation_history_rz = deque(maxlen=self.max_history_length)
+        self.rotation_time_history = deque(maxlen=self.max_history_length)
+
         # Motor evoked potentials plots and history
         self.mep_ax = None
         self.mep_plot = None
@@ -101,7 +109,7 @@ class DashboardState:
         self.intertrial_interval = '12'  # ms
     
     def add_displacement_sample(self):
-        """Add current displacement values to history for time series plotting.
+        """Add current displacement and rotation values to history for time series plotting.
         
         This method is called whenever new displacement data is received.
         It automatically maintains a rolling window of the last max_history_length samples.
@@ -109,11 +117,17 @@ class DashboardState:
         # Calculate elapsed time in seconds
         elapsed_time = time.time() - self._start_time
         
-        # Add current displacement values (x, y, z only)
+        # Add current displacement values (x, y, z)
         self.displacement_history_x.append(float(self.displacement[0]))
         self.displacement_history_y.append(float(self.displacement[1]))
         self.displacement_history_z.append(float(self.displacement[2]))
         self.displacement_time_history.append(elapsed_time)
+        
+        # Add current rotation values (rx, ry, rz - indices 3, 4, 5)
+        self.rotation_history_rx.append(float(self.displacement[3]))
+        self.rotation_history_ry.append(float(self.displacement[4]))
+        self.rotation_history_rz.append(float(self.displacement[5]))
+        self.rotation_time_history.append(elapsed_time)
 
     def update_mep_history(self, new_mep_history, t_min, t_max, sampling_rate):
         if len(new_mep_history) == 0:

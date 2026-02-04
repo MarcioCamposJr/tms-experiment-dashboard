@@ -7,6 +7,7 @@ from tms_dashboard.core.dashboard_state import DashboardState
 from .widgets import (
     create_status_widgets,
     create_time_series_panel,
+    create_mep_panel,
     create_navigation_controls,
     create_3d_scene_with_models,
 
@@ -30,16 +31,16 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
         'gap: 0;'
     ):
         
-        # ===== ROW 1 (65% height): 3D Navigation + Status Items =====
+        # ===== ROW 1 (50% height): MEP Graph + Status Items + Controls =====
         with ui.row().classes('w-full').style(
-            'flex: 55; '
+            'flex: 50; '
             'min-height: 0; '
             'align-items: stretch; '
             'gap: 0;'
         ):
             # 3D Navigation (60% width)
             with ui.card().props('flat').style(
-                'flex: 50; '
+                'flex: 45; '
                 'padding: 12px; '
                 'display: flex; '
                 'flex-direction: column; '
@@ -47,14 +48,26 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
                 'height: 100%; '
                 'background-color: #f9fafb;'
             ):
-                ui.label('3D Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;')
+                create_mep_panel(dashboard)
+                # ui.label('3D Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;')
                 
-                with ui.column().classes('w-full').style('flex: 1; min-height: 0;'):
-                    create_3d_scene_with_models(dashboard)
+                # with ui.column().classes('w-full').style('flex: 1; min-height: 0;'):
+                #     create_3d_scene_with_models(dashboard)
             
             # Status Items (40% width)
             with ui.card().props('flat').style(
-                'flex: 50; '
+                'flex: 30; '
+                'padding: 8px; '
+                'overflow: auto; '
+                'height: 100%; '
+                'background-color: #f9fafb; '
+                'display: flex; '
+                'flex-direction: column;'
+            ):
+                create_status_widgets(dashboard)
+            # Status Items (40% width)
+            with ui.card().props('flat').style(
+                'flex: 25; '
                 'padding: 8px; '
                 'overflow: hidden; '
                 'height: 100%; '
@@ -62,18 +75,18 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
                 'display: flex; '
                 'flex-direction: column;'
             ):
-                create_status_widgets(dashboard)
+                create_navigation_controls(dashboard, message_emit)
         
-        # ===== ROW 2 (35% height): Time Series Graph + Navigation Controls =====
+        # ===== ROW 2 (50% height): Time Series Graphs + 3D Scene =====
         with ui.row().classes('w-full').style(
-            'flex: 45; '
+            'flex: 50; '
             'min-height: 0; '
             'align-items: stretch; '
             'gap: 0;'
         ):
             # Time Series Graph (60% width)
             with ui.card().props('flat').style(
-                'flex: 60; '
+                'flex: 65; '
                 'padding: 12px; '
                 'display: flex; '
                 'flex-direction: row; '
@@ -85,8 +98,8 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
             
             # Navigation Controls (40% width)
             with ui.card().props('flat').style(
-                'flex: 40; '
-                'padding: 12px; '
+                'flex: 35; '
+                'padding: 12px 12px 12px 0px; '
                 'display: flex; '
                 'flex-direction: row; '
                 'overflow: hidden; '
@@ -94,4 +107,4 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit):
                 'background-color: #f9fafb;'
                 'gap: 1.5rem;'
             ):
-                create_navigation_controls(dashboard, message_emit)
+                create_3d_scene_with_models(dashboard)

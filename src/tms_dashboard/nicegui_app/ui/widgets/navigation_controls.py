@@ -17,38 +17,37 @@ def create_navigation_controls(dashboard: DashboardState, message_emit):
         dashboard: DashboardState instance
     """
     # Navigation Controls column
-    with ui.column().style('gap: 10px; flex: 1; height: 100%;'):
-        with ui.column().classes('w-full').style('gap: 10px; flex: 1;'):
-            ui.label('Navigation Controls').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
-            
-            # Main control button - Start/Stop (highlighted)
-            nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
-                'font-size: 1rem; '
-                'font-weight: 600; '
-                'padding: 16px; '
-                'min-height: 60px;'
-            )
-            # Save UI reference so the updater can change its color
-            dashboard.__dict__['navigation_button'] = nav_button
+    with ui.column().style('gap: 10px; flex: 1; height: 100%; gap: 10px; flex: 1; width: 100%;'):
+        ui.label('Navigation Controls').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
+        
+        # Main control button - Start/Stop (highlighted)
+        nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
+            'font-size: 1rem; '
+            'font-weight: 600; '
+            'padding: 16px; '
+            'min-height: 60px;'
+        )
+        # Save UI reference so the updater can change its color
+        dashboard.__dict__['navigation_button'] = nav_button
 
-            ui.separator().style('margin: 4px 0;')
-            
-            # Create Target button
-            def _create_target_click(e=None):
-                success = message_emit.create_marker()
+        ui.separator().style('margin: 4px 0;')
+        
+        # Create Target button
+        def _create_target_click(e=None):
+            success = message_emit.create_marker()
 
-                if success:
-                    ui.notify('Create target sent', position='top')
-                else:
-                    ui.notify('Failed to send Create marker', position='top')
+            if success:
+                ui.notify('Create target sent', position='top')
+            else:
+                ui.notify('Failed to send Create marker', position='top')
 
-            ui.button('Create Target', icon='add_location_alt', on_click=_create_target_click).props('outlined color=primary').classes('w-full').style(
-                'font-size: 0.95rem; '
-                'min-height: 50px;'
-            )
+        ui.button('Create Target', icon='add_location_alt', on_click=_create_target_click).props('outlined color=primary').classes('w-full').style(
+            'font-size: 0.95rem; '
+            'min-height: 50px;'
+        )
     
     # Robot Control column
-    with ui.column().style('gap: 5px; flex: 1; height: 100%;'):
+    with ui.column().style('gap: 5px; flex: 1; height: 100%; width: 100%;'):
         ui.label('Robot Control').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
 
         def _free_drive_click(e=None):

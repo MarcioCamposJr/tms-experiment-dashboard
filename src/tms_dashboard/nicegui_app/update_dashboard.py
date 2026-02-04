@@ -1,4 +1,5 @@
 import numpy as np
+import plotly.graph_objects as go
 
 from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_indexes_fast_tol
 from tms_dashboard.nicegui_app.styles import change_color, change_icon, change_label, get_status, change_button 
@@ -12,6 +13,7 @@ class UpdateDashboard:
         self.update_dashboard_colors()
         self.update_indicators()
         self.update_displacement_plot()
+        self.update_rotation_plot()
         self.update_buttons()
         if self.dashboard.status_new_mep:
             self.update_mep_plot()
@@ -72,59 +74,95 @@ class UpdateDashboard:
         y_data = list(dashboard.displacement_history_y)
         z_data = list(dashboard.displacement_history_z)
         
-        # Clear and redraw the plot
-        ax = dashboard.displacement_ax
-        if ax is None:
+        if dashboard.displacement_plot is None:
             return
-        ax.clear()
+
+        # Update existing Plotly traces in-place
+        dashboard.displacement_plot.figure.data[0].x = time_data
+        dashboard.displacement_plot.figure.data[0].y = x_data
+        dashboard.displacement_plot.figure.data[1].x = time_data
+        dashboard.displacement_plot.figure.data[1].y = y_data
+        dashboard.displacement_plot.figure.data[2].x = time_data
+        dashboard.displacement_plot.figure.data[2].y = z_data
         
-        # Plot the three lines
-        ax.plot(time_data, x_data, color='#ef4444', linewidth=2.5, label='X axis')
-        ax.plot(time_data, y_data, color='#10b981', linewidth=2.5, label='Y axis')
-        ax.plot(time_data, z_data, color='#3b82f6', linewidth=2.5, label='Z axis')
-        
-        # Restore styling
-        ax.set_xlabel('Time (s)', fontsize=10)
-        ax.set_ylabel('Displacement (mm)', fontsize=10)
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
-        ax.set_facecolor('#fafafa')
-        ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
-        
-        # Update the plot widget
+        # Force auto-range to handle sliding window
+        dashboard.displacement_plot.figure.layout.xaxis.autorange = True
         dashboard.displacement_plot.update()
     
-    def update_mep_plot(self, num_windows=5):
-        """Update MEP plot with current history data.
-        
-        Args:
-            dashboard: DashboardState instance
-        """
+    def update_rotation_plot(self):
+        """Update rotation plot with current history data (rx, ry, rz in degrees)."""
 
         dashboard = self.dashboard
         
-        # Aplicar baseline entre 5-20ms
+        # Convert deques to lists for plotting
+        time_data = list(dashboard.rotation_time_history)
+        rx_data = list(dashboard.rotation_history_rx)
+        ry_data = list(dashboard.rotation_history_ry)
+        rz_data = list(dashboard.rotation_history_rz)
+        
+        if dashboard.rotation_plot is None:
+            return
+
+        # Update existing Plotly traces in-place
+        dashboard.rotation_plot.figure.data[0].x = time_data
+        dashboard.rotation_plot.figure.data[0].y = rx_data
+        dashboard.rotation_plot.figure.data[1].x = time_data
+        dashboard.rotation_plot.figure.data[1].y = ry_data
+        dashboard.rotation_plot.figure.data[2].x = time_data
+        dashboard.rotation_plot.figure.data[2].y = rz_data
+        
+        # Force auto-range to handle sliding window
+        dashboard.rotation_plot.figure.layout.xaxis.autorange = True
+        dashboard.rotation_plot.update()
+    
+    def update_mep_plot(self, num_windows=5):
+        """Update MEP plot with current history data using Plotly."""
+        
+        dashboard = self.dashboard
+        if dashboard.mep_plot is None:
+            return
+            
+        # Obter dados
         t_min_ms = self.emg_connection.t_min * 1000
         t_max_ms = self.emg_connection.t_max * 1000
         
-        mep_history = dashboard.mep_history_baseline[-num_windows:]
+        # Se não houver dados, não faz nada
+        if not dashboard.mep_history_baseline:
+            return
+            
+        mep_history = list(dashboard.mep_history_baseline)[-num_windows:]
+        if not mep_history:
+            return
 
-        ax = dashboard.mep_ax
-        ax.clear()
-
+        # Eixo X
         t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
-
-        ax.set_xlabel('Time (ms)', fontsize=10)
-        ax.set_ylabel('MEP amplitude (uV)', fontsize=10)
-        ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
-        ax.set_facecolor('#fafafa')
-
+        
+        traces = []
+        
+        # Histórico (cinza)
         for i, mep in enumerate(mep_history[:-1]):
-            ax.plot(t_ms, mep, color='gray', alpha=0.5, linewidth=2.5, label='Trial' if i == 0 else None)
-        
-        ax.plot(t_ms, mep_history[-1], color='#ef4444', alpha=1, linewidth=2.5, label='Last')
-        ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
-        
-        # Update the plot widget
+            traces.append(go.Scatter(
+                x=t_ms, y=mep,
+                mode='lines',
+                line=dict(color='rgba(128, 128, 128, 0.5)', width=1.5),
+                showlegend=False,
+                hoverinfo='skip', # Otimização: ignora hover no histórico
+                name=f'Trial {i}'
+            ))
+            
+        # Último (vermelho destaque)
+        if len(mep_history) > 0:
+            traces.append(go.Scatter(
+                x=t_ms, y=mep_history[-1],
+                mode='lines',
+                line=dict(color='#dc2626', width=3),
+                name='Last Response',
+                showlegend=False # Sem legenda para manter limpo, ou True se quiser
+            ))
+            
+        # Atualiza figura
+        dashboard.mep_plot.figure['data'] = traces
+        # Força update
         dashboard.mep_plot.update()
 
     def update_buttons(self):
