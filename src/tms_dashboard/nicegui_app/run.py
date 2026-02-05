@@ -13,7 +13,7 @@ from tms_dashboard.core.modules.socket_client import SocketClient
 from tms_dashboard.core.modules.emg_connection import neuroOne
 from tms_dashboard.core.message_handler import MessageHandler
 from tms_dashboard.nicegui_app.update_dashboard import UpdateDashboard
-from tms_dashboard.nicegui_app.ui import create_header, create_dashboard_tabs, create_checklist_tab
+from tms_dashboard.nicegui_app.ui import create_header, create_dashboard_tabs
 # Global shared instances (persist across all sessions)
 dashboard = DashboardState()
 socket_client = SocketClient(f"http://{DEFAULT_HOST}:{DEFAULT_PORT}")
@@ -81,17 +81,13 @@ def index():
     # Build UI using shared dashboard instance
     create_header(dashboard)
     
-    # Main tabs
+    # Main tabs (single Dashboard tab). Checklist is available from the header dialog.
     with ui.tabs().classes('w-full') as tabs:
         dashboard_tab = ui.tab('Dashboard')
-        checklist_tab = ui.tab('Checklist')
-    
+
     with ui.tab_panels(tabs, value=dashboard_tab).classes('w-full').style('height: calc(100vh - 110px);'):
         with ui.tab_panel(dashboard_tab):
             create_dashboard_tabs(dashboard)
-        
-        with ui.tab_panel(checklist_tab):
-            create_checklist_tab(dashboard)
 
 
 def main():

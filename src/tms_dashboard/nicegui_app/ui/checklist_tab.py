@@ -36,8 +36,10 @@ def create_checklist_tab(dashboard: DashboardState):
         # Display checklist items
         for i, item in enumerate(dashboard.experiment_checklist):
             with ui.row().classes('w-full items-center gap-2'):
-                ui.checkbox('').bind_value(dashboard.checklist_checked, str(i))
-                ui.input(value=item).on_value_change(lambda e, idx=i: update_checklist_item(dashboard, idx, e.value)).classes('flex-grow')
+                with ui.element('div').style('width: 2.25rem; display: flex; align-items: center; justify-content: center;'):
+                    ui.checkbox('').bind_value(dashboard.checklist_checked, str(i)).classes('self-center').style('width: 1.25rem; height: 1.25rem;')
+
+                ui.input(value=item).props('debounce=300').on_value_change(lambda e, idx=i: update_checklist_item(dashboard, idx, e.value)).classes('flex-grow')
                 ui.button(icon='delete', on_click=lambda idx=i: delete_checklist_item(dashboard, idx)).props('flat dense')
         
         ui.button('Add Step', icon='add', on_click=lambda: add_checklist_item(dashboard)).classes('mt-4')
@@ -52,7 +54,6 @@ def create_checklist_tab(dashboard: DashboardState):
 def update_checklist_item(dashboard: DashboardState, idx: int, new_value: str):
     """Update a checklist item."""
     dashboard.experiment_checklist[idx] = new_value
-    create_checklist_tab.refresh()
 
 
 def delete_checklist_item(dashboard: DashboardState, idx: int):

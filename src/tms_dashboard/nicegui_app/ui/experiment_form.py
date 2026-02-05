@@ -9,11 +9,12 @@ from tms_dashboard.core.data_logger import DataLogger
 from tms_dashboard.config import CSV_PATH
 
 
-def create_experiment_form(dashboard: DashboardState):
+def create_experiment_form(dashboard: DashboardState, button_label: str = 'Configure Experiment', header_mode: bool = False):
     """Create experiment details button that opens a modal dialog.
-    
+
     Args:
         dashboard: DashboardState instance
+        button_label: label for the header button that opens the dialog
     """
     # Store selected folder path
     selected_folder = {'path': str(CSV_PATH.parent)}
@@ -170,6 +171,9 @@ def create_experiment_form(dashboard: DashboardState):
         dialog.open()
     
     # Simple button to open dialog
-    ui.button('Configure Experiment', on_click=show_experiment_dialog, icon='settings').props('outline').style(
-        'margin-bottom: 16px;'
-    )
+    btn = ui.button(button_label, on_click=show_experiment_dialog, icon='settings').props('outline')
+    if not header_mode:
+        btn.style('margin-bottom: 16px;')
+
+    # return the button instance so callers (e.g. header) can style it when used inline
+    return btn
