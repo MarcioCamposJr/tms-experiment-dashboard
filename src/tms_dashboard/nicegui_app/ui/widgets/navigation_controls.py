@@ -20,7 +20,7 @@ def create_navigation_controls(message_emit, ui_state: DashboardUI):
     """
     # Navigation Controls column
     with ui.column().style('gap: 10px; flex: 1; height: 100%; gap: 10px; flex: 1; width: 100%;'):
-        ui.label('Navigation Controls').style('font-size: 1rem; font-weight: 600; margin-bottom: 8px;')
+        ui.label('Navigation Controls').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #374151;')
         
         # Main control button - Start/Stop (highlighted)
         nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
@@ -50,7 +50,7 @@ def create_navigation_controls(message_emit, ui_state: DashboardUI):
     
     # Robot Control column
     with ui.column().style('gap: 5px; flex: 1; height: 100%; width: 100%;'):
-        ui.label('Robot Control').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #4b5563;')
+        ui.label('Robot Control').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #374151;')
 
         def _free_drive_click(e=None):
             success = message_emit.free_drive_robot()

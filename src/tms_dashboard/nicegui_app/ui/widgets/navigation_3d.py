@@ -38,8 +38,15 @@ def create_3d_scene_with_models(dashboard: DashboardState):
 
     # Full height scene - fills    # Create container for 3D scene
     with ui.column().classes('w-full h-full').style('position: relative; overflow: hidden; display: flex; flex-direction: column; flex: 1;'):
-        ui.label('Navigation').style('font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: #4b5563;')
-        with ui.column().style("width: 100%; height: calc(100% - 24px); border: 1px solid #e5e7eb; border-radius: 8px; background-color: white; overflow: hidden;"):
+        ui.label('Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; color: #4b5563;')
+        with ui.column().style("position: relative; width: 100%; height: calc(100% - 24px); border: 1px solid #e5e7eb; border-radius: 8px; background-color: white; overflow: hidden;"):
+            # Static Overlay Label example
+            distance_label = ui.label(f'Distance: {dashboard.module_displacement} mm').style(
+                'position: absolute; top: 10px; left: 10px; z-index: 10; '
+                'background-color: transparent; padding: 8px 12px; '
+                'font-size: 1.1rem; font-weight: 450; color: #374151;'
+            )
+            
             with ui.row().style("width: calc(100% - 30px); height: calc(100% - 30px); margin: 15px;"):
                 with ui.scene().classes('w-full h-full') as scene:
                     # Head model - static in scene
@@ -59,6 +66,7 @@ def create_3d_scene_with_models(dashboard: DashboardState):
                     # Timer to update object positions from dashboard state
                     def update_positions():
                         if dashboard.target_set:
+                            distance_label.set_text(f'Distance: {dashboard.module_displacement} mm')
                             # Calculate relative positions (coil and target relative to head)
 
                             target_marker_stl.material(color= "yellow", opacity=1)

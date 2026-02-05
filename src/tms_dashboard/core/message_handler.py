@@ -207,7 +207,7 @@ class MessageHandler:
     def _handle_displacement(self, data):
         """Handle displacement to target update."""
         self.dashboard.displacement = list(map(lambda x: data['displacement'][x], range(6)))
-        self.dashboard.module_displacement = np.linalg.norm(self.dashboard.displacement[:3])
+        self.dashboard.module_displacement = round(np.linalg.norm(self.dashboard.displacement[:3]),2)
 
         # Update displacement history for plotting
         self.dashboard.add_displacement_sample()

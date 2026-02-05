@@ -78,7 +78,7 @@ def create_time_series_panel(ui_state: DashboardUI):
         with ui.column().style('flex: 1; height: 100%; min-width: 0; display: flex; flex-direction: column;'):
             with ui.row().style('align-items: center; gap: 6px; margin-bottom: 4px; flex-shrink: 0;'):
                 # ui.icon('trending_up', size='xs').style('color: #3b82f6;')
-                ui.label('Displacement (mm)').style('font-size: 0.9rem; font-weight: 600; color: #374151;')
+                ui.label('Displacement (mm)').style('font-size: 1.1rem; font-weight: 600; color: #374151;')
             
             # Container for Plotly
             with ui.card().props('flat').style('flex: 1; width: 100%; min-height: 0; padding: 0; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 8px;'):
@@ -108,7 +108,7 @@ def create_time_series_panel(ui_state: DashboardUI):
         with ui.column().style('flex: 1; height: 100%; min-width: 0; display: flex; flex-direction: column;'):
             with ui.row().style('align-items: center; gap: 6px; margin-bottom: 4px; flex-shrink: 0;'):
                 # ui.icon('rotate_right', size='xs').style('color: #10b981;')
-                ui.label('Rotation (°)').style('font-size: 0.9rem; font-weight: 600; color: #374151;')
+                ui.label('Rotation (°)').style('font-size: 1.1rem; font-weight: 600; color: #374151;')
             
             # Container for Plotly
             with ui.card().props('flat').style('flex: 1; width: 100%; min-height: 0; padding: 0; overflow: hidden; border: 1px solid #e5e7eb; border-radius: 8px;'):
