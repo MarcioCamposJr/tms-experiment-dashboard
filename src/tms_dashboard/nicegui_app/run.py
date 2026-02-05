@@ -112,7 +112,7 @@ def index():
     ui.context.client.on_disconnect(lambda: client_manager.unregister(ui_state))
 
     # Build UI using shared dashboard instance and per-session UI state
-    create_header(dashboard, ui_state)
+    create_header(dashboard)
     create_dashboard_tabs(dashboard, message_emit, ui_state)
 
 
@@ -130,3 +130,9 @@ def main():
         title="TMS Dashboard",
         favicon="🧠"
     )
+
+
+if __name__ == "__main__":
+    print("🚀 Starting TMS Dashboard with NiceGUI...")
+    print(f"📡 Acess: http://localhost:{NICEGUI_PORT}")
+    main()
