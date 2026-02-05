@@ -152,8 +152,6 @@ class UpdateDashboard:
             return
             
         mep_history = list(dashboard.mep_history_baseline)[-num_windows:]
-        if not mep_history:
-            return
 
         # Eixo X
         t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
