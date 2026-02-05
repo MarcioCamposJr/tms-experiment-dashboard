@@ -103,6 +103,16 @@ def index():
         </style>
     ''')
     
+    # Build UI using shared dashboard instance
+    create_header(dashboard)
+    
+    # Main tabs (single Dashboard tab). Checklist is available from the header dialog.
+    with ui.tabs().classes('w-full') as tabs:
+        dashboard_tab = ui.tab('Dashboard')
+
+    with ui.tab_panels(tabs, value=dashboard_tab).classes('w-full').style('height: calc(100vh - 110px);'):
+        with ui.tab_panel(dashboard_tab):
+            create_dashboard_tabs(dashboard)
     # Create per-session UI state
     ui_state = DashboardUI()
     client_manager.register(ui_state)
@@ -129,3 +139,9 @@ def main():
         title="TMS Dashboard",
         favicon="🧠"
     )
+
+
+if __name__ == "__main__":
+    print("🚀 Starting TMS Dashboard with NiceGUI...")
+    print(f"📡 Acess: http://localhost:{NICEGUI_PORT}")
+    main()
