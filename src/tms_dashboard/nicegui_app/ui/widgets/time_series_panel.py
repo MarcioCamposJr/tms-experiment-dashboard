@@ -45,7 +45,7 @@ def create_mep_panel(dashboard: DashboardState):
                     gridcolor='#d1d5db',
                     zeroline=True,
                     zerolinecolor='#9ca3af',
-                    automargin=True
+                    automargin=True,
                 ),
                 autosize=True,
                 dragmode=False

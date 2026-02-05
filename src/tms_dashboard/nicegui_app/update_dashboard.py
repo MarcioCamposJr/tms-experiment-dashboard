@@ -154,7 +154,10 @@ class UpdateDashboard:
             ))
             
         # Atualiza figura
-        dashboard.mep_plot.figure['data'] = traces
+        # Substituímos a figura inteira para evitar o erro de validação do Plotly
+        # "The data property of a figure may only be assigned..."
+        # Mantemos o layout original
+        dashboard.mep_plot.figure = go.Figure(data=traces, layout=dashboard.mep_plot.figure.layout)
         # Força update
         dashboard.mep_plot.update()
 
