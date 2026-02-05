@@ -7,7 +7,6 @@ from scipy.spatial.transform import Rotation as R
 from typing import Optional
 from .dashboard_state import DashboardState
 from .modules.socket_client import SocketClient
-from tms_dashboard.utils.constants import robot_messages
 
 
 class MessageHandler:
@@ -52,6 +51,7 @@ class MessageHandler:
             topic: Message topic string
             data: Message data payload
         """
+
         match topic:
             case 'Set image fiducial':
                 self._handle_image_fiducial(data)
@@ -75,7 +75,7 @@ class MessageHandler:
 
                     self.dashboard.probe_visible = data['visibilities'][0]
                     self.dashboard.head_visible = data['visibilities'][1]
-                    self.dashboard.coil_visible = all(data['visibilities'][2:])
+                    self.dashboard.coil_visible = data['visibilities'][2]
 
                 else:
                     self.dashboard.camera_set = False
@@ -97,7 +97,7 @@ class MessageHandler:
                 self.dashboard.tracker_LE_set = False
             
             case "Robot to Neuronavigation: Robot connection status":
-                self.dashboard.robot_set = True if data['state'] == 'Connected' else False
+                self.dashboard.robot_set = True if data['data'] == 'Connected' else False
             
             case 'Open navigation menu':
                 self.dashboard.matrix_set = True
@@ -140,7 +140,28 @@ class MessageHandler:
             
             case "Press navigation button":
                 self.dashboard.navigation_button_pressed = data["cond"]
+            
+            case "Robot to Neuronavigation: Send force sensor data":
+                self.dashboard.force = data["force_feedback"] 
     
+            case "Start navigation":
+                self.dashboard.navigation_button_pressed = True
+
+            case "Stop navigation":
+                self.dashboard.navigation_button_pressed = False
+
+            case "Neuronavigation to Robot: Set free drive":
+                pressed = data["set"]
+                self.dashboard.free_drive_robot_pressed = pressed
+            
+            case 'Press move away button':
+                pressed = data['pressed']
+                self.dashboard.move_upward_robot_pressed = pressed
+
+            case "Press robot button":
+                pressed = data['pressed']
+                self.dashboard.active_robot_pressed = pressed
+
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
         if data == "":
@@ -166,7 +187,6 @@ class MessageHandler:
     def _handle_tracker_poses(self, data):
         """Handle tracker pose updates."""
         poses = data['poses']
-        print(poses[2][0], poses[2][1], poses[2][1])
         # Convert angles to degrees
         self.dashboard.probe_location = (
             poses[0][1], -poses[0][2], -poses[0][0],

@@ -10,11 +10,12 @@ from tms_dashboard.nicegui_app.ui.experiment_form import create_experiment_form
 from tms_dashboard.nicegui_app.ui.checklist_tab import create_checklist_tab
 
 
-def create_header(dashboard: DashboardState):
+def create_header(dashboard: DashboardState, ui_state=None):
     """Create clean minimal header with working experiment config dialog.
     
     Args:
         dashboard: DashboardState instance
+        ui_state: DashboardUI instance (optional, for consistency)
     """
     # Header row
     with ui.row().classes('w-full items-center justify-between').style(
