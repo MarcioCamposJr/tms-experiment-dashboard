@@ -32,17 +32,18 @@ def create_mep_panel(ui_state: DashboardUI):
             ))
             
             fig_mep.update_layout(
-                margin=dict(l=55, r=10, t=10, b=35), # Tight margins
+                margin=dict(l=60, r=20, t=20, b=40), # Increased margins
+                font=dict(family="Roboto, sans-serif", size=12, color="#6b7280"), # Matched font
                 paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='#f3f4f6', # Slightly different background (gray-100) to distinguish
+                plot_bgcolor='#f3f4f6', 
                 showlegend=False,
                 xaxis=dict(
                     title='Time (ms)', 
                     showgrid=True, 
-                    gridcolor='#d1d5db', # Darker grid for clinical precision feel
+                    gridcolor='#d1d5db', 
                     zeroline=True,
                     zerolinecolor='#9ca3af',
-                    range=[-5, 40] # Fixed range as per original
+                    range=[-5, 40] 
                 ),
                 yaxis=dict(
                     title='Amplitude (µV)', 
@@ -90,7 +91,8 @@ def create_time_series_panel(ui_state: DashboardUI):
                 fig_disp.add_trace(go.Scatter(x=[], y=[], name='Z', mode='lines', line=dict(color='#3b82f6', width=2)))
                 
                 fig_disp.update_layout(
-                    margin=dict(l=50, r=5, t=5, b=30),  # Maximized space
+                    margin=dict(l=60, r=20, t=20, b=40),  # Increased margins
+                    font=dict(family="Roboto, sans-serif", size=12, color="#6b7280"), # Matched font
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='#fafbfc',
                     showlegend=True,
@@ -120,7 +122,8 @@ def create_time_series_panel(ui_state: DashboardUI):
                 fig_rot.add_trace(go.Scatter(x=[], y=[], name='RZ', mode='lines', line=dict(color='#3b82f6', width=2)))
                 
                 fig_rot.update_layout(
-                    margin=dict(l=50, r=5, t=5, b=30), # Maximized space
+                    margin=dict(l=60, r=20, t=20, b=40), # Increased margins
+                    font=dict(family="Roboto, sans-serif", size=12, color="#6b7280"), # Matched font
                     paper_bgcolor='rgba(0,0,0,0)',
                     plot_bgcolor='#fafbfc',
                     showlegend=True,
