@@ -22,6 +22,7 @@ async def open_robot_config(dashboard: DashboardState, message_emit=None):
         dashboard: DashboardState instance
         message_emit: Message2Server instance for sending config to neuronavigation
     """
+    
     global robot_config
     
     with ui.dialog().props('persistent') as dialog:

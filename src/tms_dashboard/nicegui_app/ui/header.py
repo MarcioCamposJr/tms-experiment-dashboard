@@ -6,7 +6,7 @@ from nicegui import ui
 
 from tms_dashboard.nicegui_app.ui.widgets.exp_logger_dialog import open_config
 from tms_dashboard.nicegui_app.ui.widgets.robot_dialog import open_robot_config
-from tms_dashboard.config import IMAGES_DIR
+from tms_dashboard.config import IMAGES_DIR, CSV_PATH
 from tms_dashboard.core.dashboard_state import DashboardState
 from tms_dashboard.core.data_logger import DataLogger
 from tms_dashboard.nicegui_app.ui.experiment_form import create_experiment_form
