@@ -9,7 +9,6 @@ from tms_dashboard.utils.coordinate_transform import compute_relative_pose
 from scipy.spatial.transform import Rotation as R
 
 class CoordinateSystem(ui.scene.group):
-
     def __init__(self, name: str, *, length: float = 1.0) -> None:
         super().__init__()
 

@@ -55,6 +55,8 @@ class MessageHandler:
 
         if self.neuronaviagator_status:
             match topic:
+
+                #IMPORTANT: THIS TOPIC MUST BE THE FIRST
                 case 'Exit':
                     self.neuronaviagator_status = False
                     self.dashboard.reset_state()
