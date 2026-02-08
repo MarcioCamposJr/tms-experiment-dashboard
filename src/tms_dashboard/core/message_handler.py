@@ -98,10 +98,10 @@ class MessageHandler:
                 case 'Neuronavigation to Robot: Update displacement to target':
                     self._handle_displacement(data)
 
-                self.dashboard.navigation_button_pressed = True
-                self.dashboard.target_set = True
-                self.dashboard.image_fiducials = True
-                self.dashboard.tracker_fiducials = True
+                    self.dashboard.navigation_button_pressed = True
+                    self.dashboard.target_set = True
+                    self.dashboard.image_fiducials = True
+                    self.dashboard.tracker_fiducials = True
                 
                 case 'Tracker fiducials set':
                     self.dashboard.tracker_fiducials = True
@@ -165,8 +165,8 @@ class MessageHandler:
                     pressed = data['pressed']
                     self.dashboard.active_robot_pressed = pressed
 
-            case "Robot to Neuronavigation: Initial config":
-                self.robot_state.sync_from_embedded(data['config'])
+                case "Robot to Neuronavigation: Initial config":
+                    self.robot_state.sync_from_embedded(data['config'])
 
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
