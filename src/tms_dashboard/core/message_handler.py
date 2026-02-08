@@ -85,30 +85,30 @@ class MessageHandler:
             case 'Neuronavigation to Robot: Update displacement to target':
                 self._handle_displacement(data)
 
-                    self.dashboard.navigation_button_pressed = True
-                    self.dashboard.target_set = True
-                    self.dashboard.image_fiducials = True
-                    self.dashboard.tracker_fiducials = True
+                self.dashboard.navigation_button_pressed = True
+                self.dashboard.target_set = True
+                self.dashboard.image_fiducials = True
+                self.dashboard.tracker_fiducials = True
                 
-                case 'Tracker fiducials set':
-                    self.dashboard.tracker_fiducials = True
+            case 'Tracker fiducials set':
+                self.dashboard.tracker_fiducials = True
+            
+            case 'Reset tracker fiducials':
+                self.dashboard.tracker_fiducials = False
+            
+            case "Robot to Neuronavigation: Robot connection status":
+                self.dashboard.robot_set = True if data['data'] == 'Connected' else False
+            
+            case 'Open navigation menu':
+                self.dashboard.matrix_set = True
+            
+            case "Neuronavigation to Robot: Set target":
+                self.dashboard.target_set = True
                 
-                case 'Reset tracker fiducials':
-                    self.dashboard.tracker_fiducials = False
-                
-                case "Robot to Neuronavigation: Robot connection status":
-                    self.dashboard.robot_set = True if data['data'] == 'Connected' else False
-                
-                case 'Open navigation menu':
-                    self.dashboard.matrix_set = True
-                
-                case "Neuronavigation to Robot: Set target":
-                    self.dashboard.target_set = True
-                    
-                    # Extract target position from transformation matrix
-                    if 'target' in data:
-                        target_matrix = np.array(data['target'])
-                        self._handle_target_position(target_matrix)
+                # Extract target position from transformation matrix
+                if 'target' in data:
+                    target_matrix = np.array(data['target'])
+                    self._handle_target_position(target_matrix)
 
             case "Neuronavigation to Robot: Unset target":
                 self.dashboard.target_set = False
