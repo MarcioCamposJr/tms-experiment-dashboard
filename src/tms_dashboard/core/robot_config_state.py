@@ -112,8 +112,6 @@ class RobotConfigState:
     @classmethod
     def from_dict(cls, data: dict) -> 'RobotConfigState':
         """Create configuration from dictionary."""
-        pid_trans = data.get('pid_translation', {})
-        pid_rot = data.get('pid_rotation', {})
         
         return cls(
             use_force_sensor=data.get('use_force_sensor', False),
@@ -165,3 +163,14 @@ class RobotConfigState:
         for key, value in data.items():
             if key in valid_fields:
                 setattr(self, key, value)
+
+    def _sync_pids(self, pids_factors: dict) -> None:
+        translations = pids_factors.get('translations', [])
+        rotations = pids_factors.get('rotations', [])
+        
+        pid_attrs = ['pid_x', 'pid_y', 'pid_z', 'pid_rx', 'pid_ry', 'pid_rz']
+        all_pids = translations + rotations
+        
+        for i, pid_data in enumerate(all_pids):
+            if i < len(pid_attrs):
+                setattr(self, pid_attrs[i], PIDParams.from_dict(pid_data))

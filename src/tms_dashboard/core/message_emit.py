@@ -69,10 +69,20 @@ class Message2Server():
             data=robot_config.to_dict()
         )
 
-        # self.__send_message2robot(
-        #     topic='Neuronavigation to Robot: Update pid values', 
-        #     data=robot_config.to_dict()
-        # )
+        pids_factors = {"translations": [
+                                        robot_config.pid_x.to_dict(),
+                                        robot_config.pid_y.to_dict(),
+                                        robot_config.pid_z.to_dict()
+                                        ],
+                        "rotations": [
+                                        robot_config.pid_rx.to_dict(),
+                                        robot_config.pid_ry.to_dict(),
+                                        robot_config.pid_rz.to_dict(),
+                                        ]}
+        self.__send_message2robot(
+            topic='Neuronavigation to Robot: Update robot control pid factors', 
+            data=pids_factors
+        )
 
         return True
 

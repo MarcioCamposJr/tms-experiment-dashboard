@@ -167,7 +167,9 @@ class MessageHandler:
 
                 case "Robot to Neuronavigation: Initial config":
                     self.robot_state.sync_from_embedded(data['config'])
-
+                    if 'pid_factors' in data:
+                        self.robot_state._sync_pids(data['pid_factors'])
+                    
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
         if data == "":
