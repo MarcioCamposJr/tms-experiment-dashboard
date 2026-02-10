@@ -41,7 +41,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                 
                 # ===== SECTION 1: Sensors =====
                 with ui.expansion('Sensors', icon='sensors', value=True).classes('w-full').style('margin-top: 8px;'):
-                    with ui.grid(columns=4).classes('w-full gap-4 items-center'):
+                    with ui.grid(columns=3).classes('w-full gap-4 items-center'):
                         inputs['use_force_sensor'] = ui.switch(
                             'Use Force Sensor', 
                             value=robot_config.use_force_sensor
@@ -56,11 +56,6 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             label='COM Port', 
                             value=robot_config.com_port_pressure_sensor,
                             placeholder='e.g., COM1 or /dev/ttyUSB0'
-                        ).classes('w-full').props('outlined dense')
-
-                        inputs['connect_pressure_sensor_button'] = ui.button(
-                            'Connect',
-                            on_click=lambda: robot_config.connect_pressure_sensor()
                         ).classes('w-full').props('outlined dense')
                 
                 # ===== SECTION 3: Movement Algorithm =====
