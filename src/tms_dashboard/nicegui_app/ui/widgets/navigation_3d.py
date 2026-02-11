@@ -74,7 +74,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     def refresh_surfaces():
                         nonlocal stl_version_seen
 
-                        if not dashboard.stl_urls:
+                        if not dashboard.stl_urls and dashboard.stl_version == 0 and dashboard.navigation_button_pressed:
                             message_emit.request_invesalius_mesh()
 
                         if dashboard.stl_version == stl_version_seen:
