@@ -12,25 +12,6 @@ from tms_dashboard.config import OBJECTS_DIR
 
 from tms_dashboard.utils.coordinate_transform import compute_relative_pose
 
-class CoordinateSystem(ui.scene.group):
-    def __init__(self, name: str, *, length: float = 1.0) -> None:
-        super().__init__()
-
-        with self:
-            for label, color, rx, ry, rz in [
-                ('x', '#ff0000', 0, 0, -math.pi / 2),
-                ('y', '#00ff00', 0, 0, 0),
-                ('z', '#0000ff', math.pi / 2, 0, 0),
-            ]:
-                with ui.scene.group().rotate(rx, ry, rz):
-                    ui.scene.cylinder(0.02 * length, 0.02 * length, 0.8 * length) \
-                        .move(y=0.4 * length).material(color)
-                    ui.scene.cylinder(0, 0.1 * length, 0.2 * length) \
-                        .move(y=0.9 * length).material(color)
-                    ui.scene.text(label, style=f'color: {color}') \
-                        .move(y=1.1 * length)
-            ui.scene.text(name, style='color: #808080')
-
 def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message2Server):
     """Create detailed 3D scene with STL models of probe, head, coil, and target.
     
@@ -74,8 +55,9 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     def refresh_surfaces():
                         nonlocal stl_version_seen
 
-                        if not dashboard.stl_urls and dashboard.stl_version == 0 and dashboard.navigation_button_pressed:
+                        if not dashboard.stl_urls and dashboard.stl_version == 0 and not dashboard.wait_for_stl and dashboard.navigation_button_pressed:
                             message_emit.request_invesalius_mesh()
+                            dashboard.wait_for_stl = True
 
                         if dashboard.stl_version == stl_version_seen:
                             return
@@ -92,12 +74,16 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
 
                     # Timer to update object positions from dashboard state
                     def update_positions():
+
                         refresh_surfaces()
+                        coil_stl.move(dashboard.coil_location[0], dashboard.coil_location[1], dashboard.coil_location[2])
+                        # needs to add 90deg in Z (1.5708 rad), only for tms model
+                        coil_stl.rotate(dashboard.coil_location[3], dashboard.coil_location[4], dashboard.coil_location[5])
+
                         if dashboard.target_set:
                             distance_label.set_text(f'Distance: {dashboard.module_displacement} mm')
                             # Get target location: (x, y, z, rx, ry, rz) in InVesalius coords
                             target = dashboard.target_location
-                            displacement = dashboard.displacement
                             
                             # Convert InVesalius Z-up to Three.js Y-up:
                             # InVesalius: X=right, Y=front, Z=up
@@ -108,10 +94,6 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             target_marker_stl.move(target[0], target[1], target[2])
                             target_marker_stl.rotate(target[3], target[4], target[5])
                             target_marker_stl.material(color="yellow", opacity=1)
-
-                            coil_stl.move(dashboard.coil_location[0], dashboard.coil_location[1], dashboard.coil_location[2])
-                            # needs to add 90deg in Z (1.5708 rad), only for tms model
-                            coil_stl.rotate(dashboard.coil_location[3], dashboard.coil_location[4], dashboard.coil_location[5])
                             
                             # Dynamic camera: perpendicular to target plane (like InVesalius)
                             min_distance = 1
@@ -151,11 +133,12 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                         
                         else:
                             # No target - reset to origin
-                            coil_stl.move(-4, 0, 0)
-                            coil_stl.rotate(0,0,0)
-                            target_marker_stl.material(opacity=0)
+                            # coil_stl.move(-4, 0, 0)
+                            # coil_stl.rotate(0,0,0)
+                            # target_marker_stl.material(opacity=0)
                             
-                            # Reset camera to default view
-                            scene.move_camera(x=0, y=2, z=5, look_at_x=0, look_at_y=0, look_at_z=0)
+                            # # Reset camera to default view
+                            # scene.move_camera(x=0, y=2, z=5, look_at_x=0, look_at_y=0, look_at_z=0)
+                            pass
                     
                     ui.timer(0.1, update_positions)  # Update at 10 Hz

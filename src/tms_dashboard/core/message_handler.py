@@ -70,6 +70,10 @@ class MessageHandler:
         """
 
         if self.neuronaviagator_status:
+            
+            if "surface" in topic:
+                print(topic)
+
             match topic:
 
                 #IMPORTANT: THIS TOPIC MUST BE THE FIRST
@@ -188,6 +192,10 @@ class MessageHandler:
 
                 case "Neuronavigation to Dashboard: Send surface":
                     self._handle_surface_stl(data)
+                    self.dashboard.wait_for_stl = False
+
+                case "Create surface":
+                    print("TEste")
                     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
