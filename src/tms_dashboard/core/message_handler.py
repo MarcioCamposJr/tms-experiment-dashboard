@@ -265,6 +265,7 @@ class MessageHandler:
         try:
             name = data.get('model_name')
             stl_b64 = data.get('stl_b64')
+            rgb_normalized = data.get('color')
 
             if not (name and stl_b64):
                 print("Error: Missing model name or STL data.")
@@ -272,12 +273,18 @@ class MessageHandler:
 
             print(f"Processing surface for model: {name}")
 
+            rgb_255 = [int(x * 255) for x in rgb_normalized]
+            hex_color = "#{:02x}{:02x}{:02x}".format(*rgb_255)
+
             # Generate data URL
             # NOTE: If using data URLs directly for binary STL, you'd handle differently.
             data_url = f'data:model/stl;base64,{stl_b64}'
 
             # Update dashboard
-            self.dashboard.stl_urls[name] = data_url
+            self.dashboard.stl_urls[name] = {
+                "url": data_url,
+                "color": hex_color
+            }
             self.dashboard.stl_version += 1
             print(f"Updated dashboard for model: {name}")
 

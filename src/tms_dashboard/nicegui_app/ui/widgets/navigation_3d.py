@@ -63,12 +63,12 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             return
 
                         stl_version_seen = dashboard.stl_version
-                        for name, url in dashboard.stl_urls.items():
+                        for name, stl_info in dashboard.stl_urls.items():
                             if name in dashboard.stl_objects:
                                 continue
 
-                            obj = scene.stl(url)
-                            obj.scale(SCALE).material('orange', opacity=0.4)
+                            obj = scene.stl(stl_info["url"])
+                            obj.scale(SCALE).material(stl_info.get("color", "orange"), opacity=0.4)
 
                             dashboard.stl_objects[name] = obj
 
