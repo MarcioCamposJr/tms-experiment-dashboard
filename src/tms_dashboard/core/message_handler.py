@@ -201,8 +201,9 @@ class MessageHandler:
                     surface_indexes = data.get("surface_indexes", None)
                     if surface_indexes:
                         for index in surface_indexes:
-                            self.dashboard.stl_urls.pop(index)
-                            self.dashboard.stl_objects[index].delete()
+                            if index in self.dashboard.stl_urls:
+                                self.dashboard.stl_urls.pop(index)
+                                self.dashboard.stl_objects[index].delete()
 
                     
     def _handle_image_fiducial(self, data):
