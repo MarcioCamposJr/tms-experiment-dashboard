@@ -33,7 +33,9 @@ class Message2Server():
         return False
 
     def request_invesalius_mesh(self):
-        return self.__send_message2navigation(topic='Publish surface')
+        if not self.dashboard.wait_for_stl:
+            self.dashboard.wait_for_stl = True
+            return self.__send_message2navigation(topic='Publish surface')
 
     def active_robot(self):
         self.check_robot_connection()

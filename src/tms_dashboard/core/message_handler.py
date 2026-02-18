@@ -70,9 +70,6 @@ class MessageHandler:
         """
 
         if self.neuronaviagator_status:
-            
-            if "surface" in topic:
-                print(topic)
 
             match topic:
 
@@ -194,8 +191,11 @@ class MessageHandler:
                     self._handle_surface_stl(data)
                     self.dashboard.wait_for_stl = False
 
-                case "Create surface":
-                    print("TEste")
+                case "Fold surface task":
+                    self.message_emit.request_invesalius_mesh()
+                
+                case "Set surface colour" | "Set surface transparency":
+                    self._handle_material_surface(data)
                     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
@@ -266,6 +266,8 @@ class MessageHandler:
             name = data.get('model_name')
             stl_b64 = data.get('stl_b64')
             rgb_normalized = data.get('color')
+            surface_index = data.get('surface_index')
+            transparency = data.get("transparency")
 
             if not (name and stl_b64):
                 print("Error: Missing model name or STL data.")
@@ -281,12 +283,34 @@ class MessageHandler:
             data_url = f'data:model/stl;base64,{stl_b64}'
 
             # Update dashboard
-            self.dashboard.stl_urls[name] = {
+            self.dashboard.stl_urls[surface_index] = {
+                "name": name,
                 "url": data_url,
-                "color": hex_color
+                "color": hex_color,
+                "transparency": transparency
             }
             self.dashboard.stl_version += 1
             print(f"Updated dashboard for model: {name}")
 
         except Exception as e:
             print(f"Unhandled exception in processing surface: {e}")
+
+    def _handle_material_surface(self, data):
+        if "surface_index" in data:
+            surface_index = data["surface_index"]
+            if surface_index in self.dashboard.stl_urls:
+                if "transparency" in data:
+                    prop_material, key = 1 - data["transparency"], "transparency"
+                elif "colour" in data:
+                    color, key = data["colour"], "colour"
+                    rgb_255 = [int(x * 255) for x in color]
+                    prop_material = "#{:02x}{:02x}{:02x}".format(*rgb_255)
+                else:
+                    return
+                
+                self.dashboard.stl_urls[surface_index][key] = prop_material
+                self.dashboard.stl_version += 1
+
+            else:
+                self.message_emit.request_invesalius_mesh()
+

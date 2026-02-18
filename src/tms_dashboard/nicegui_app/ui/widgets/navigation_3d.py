@@ -35,13 +35,6 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                 with ui.scene(grid=(0.1, 0.1)).classes('w-full h-full') as scene:
                     stl_version_seen = dashboard.stl_version
                     # scene.run_method('cameraControls.enabled = false')
-                    # Head model - positioned at origin (head coordinates)
-                    # Static reference - doesn't move, just for visual context
-                    #head_url = '/static/objects/head.stl'
-                    #head_stl = scene.stl(head_url).scale(SCALE * 2.9).material("#949494", opacity=1)
-                    # Rotate head to stand upright: X rotation of -90° (occipital was facing ground)
-                    #head_stl.move(0, 0, 1).rotate(math.pi/2, 0, -math.pi/10)
-                    #-math.pi/2
                     
                     # Coil model - will move based on displacement
                     coil_path = '/static/objects/magstim_fig8_coil.stl'
@@ -55,22 +48,33 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     def refresh_surfaces():
                         nonlocal stl_version_seen
 
-                        if not dashboard.stl_urls and dashboard.stl_version == 0 and not dashboard.wait_for_stl and dashboard.navigation_button_pressed:
+                        if (
+                            not dashboard.stl_urls
+                            and dashboard.stl_version == 0
+                            and dashboard.navigation_button_pressed
+                        ):
                             message_emit.request_invesalius_mesh()
-                            dashboard.wait_for_stl = True
-
-                        if dashboard.stl_version == stl_version_seen:
                             return
 
+                        if dashboard.stl_version == stl_version_seen:
+                            first_object = next(iter(dashboard.stl_objects.values()), None)
+                            if first_object is not None and first_object.id in scene.objects:
+                                return
+
                         stl_version_seen = dashboard.stl_version
-                        for name, stl_info in dashboard.stl_urls.items():
-                            if name in dashboard.stl_objects:
+                        for surface_index, stl_info in dashboard.stl_urls.items():
+                            color = stl_info.get("color", "gray")
+                            opacity = stl_info.get("transparency", 0.4)
+
+                            obj = dashboard.stl_objects.get(surface_index)
+
+                            if obj and obj.id in scene.objects:
+                                obj.material(color, opacity=opacity)
                                 continue
 
                             obj = scene.stl(stl_info["url"])
-                            obj.scale(SCALE).material(stl_info.get("color", "orange"), opacity=0.4)
-
-                            dashboard.stl_objects[name] = obj
+                            obj.scale(SCALE).material(color, opacity=opacity)
+                            dashboard.stl_objects[surface_index] = obj
 
                     # Timer to update object positions from dashboard state
                     def update_positions():
