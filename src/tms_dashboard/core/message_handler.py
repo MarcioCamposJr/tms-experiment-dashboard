@@ -288,7 +288,7 @@ class MessageHandler:
             stl_b64 = data.get('stl_b64')
             rgb_normalized = data.get('color')
             surface_index = data.get('surface_index')
-            transparency = data.get("transparency")
+            transparency = 1 - data.get("transparency")
 
             if not (name and stl_b64):
                 print("Error: Missing model name or STL data.")

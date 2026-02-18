@@ -19,7 +19,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
         dashboard: DashboardState instance for accessing object positions
     """
 
-    SCALE = 1
+    SCALE = 0.65
 
     with ui.column().classes('w-full h-full').style('position: relative; overflow: hidden; display: flex; flex-direction: column; flex: 1;'):
         ui.label('Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; color: #4b5563;')
@@ -37,7 +37,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     
                     # Coil model - will move based on displacement
                     coil_path = '/static/objects/magstim_fig8_coil.stl'
-                    coil_stl = scene.stl(coil_path).scale(SCALE).material('gray', opacity=0.5)
+                    coil_stl = scene.stl(coil_path).scale(SCALE).material('gray', opacity=0.4)
             
                     # Target marker - visual indicator of target position
                     # This will be positioned when target is set
@@ -45,6 +45,23 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     target_marker_stl = scene.stl(coil_path).scale(SCALE).material('red', opacity=0)
 
                     scene.move_camera(x=0, y=80, z=200, look_at_x=0, look_at_y=0, look_at_z=0)
+
+                    # Disable depthWrite on coil and target so they don't block
+                    # the view of head/brain surfaces behind them
+                    for stl_obj in [coil_stl, target_marker_stl]:
+                        ui.run_javascript(f'''
+                            setTimeout(() => {{
+                                for (const [key, el] of Object.entries(window)) {{
+                                    if (key.startsWith("scene_")) {{
+                                        el.traverse((child) => {{
+                                            if (child.object_id === "{stl_obj.id}" && child.material) {{
+                                                child.material.depthWrite = false;
+                                            }}
+                                        }});
+                                    }}
+                                }}
+                            }}, 500);
+                        ''')
 
                     def refresh_surfaces():
                         nonlocal stl_version_seen
@@ -70,11 +87,28 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             obj = dashboard.stl_objects.get(surface_index)
 
                             if obj and obj.id in scene.objects:
-                                obj.material(color, opacity=opacity)
+                                obj.material(color, opacity=opacity, side='both')
                                 continue
 
                             obj = scene.stl(stl_info["url"])
-                            obj.scale(SCALE).material(color, opacity=opacity)
+                            obj.material(color, opacity=opacity, side='both')
+                            # Disable depthWrite so inner objects (brain) show through
+                            # outer transparent objects (head).
+                            # Uses Three.js scene traversal via the global scene reference
+                            # that NiceGUI exposes as window["scene_" + elementId].
+                            ui.run_javascript(f'''
+                                setTimeout(() => {{
+                                    for (const [key, el] of Object.entries(window)) {{
+                                        if (key.startsWith("scene_")) {{
+                                            el.traverse((child) => {{
+                                                if (child.object_id === "{obj.id}" && child.material) {{
+                                                    child.material.depthWrite = false;
+                                                }}
+                                            }});
+                                        }}
+                                    }}
+                                }}, 500);
+                            ''')
                             dashboard.stl_objects[surface_index] = obj
 
                     # Timer to update object positions from dashboard state
@@ -99,31 +133,31 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             target_marker_stl.move(target[0], target[1], target[2])
                             target_marker_stl.rotate(target[3], target[4], target[5])
                             target_marker_stl.material(color="yellow", opacity=1)
-                            
-                            # Dynamic camera: perpendicular to target plane (like InVesalius)
-                            min_distance = 60
-                            max_distance = 200
-                            displacement_mm = dashboard.module_displacement
-                            normalized_displacement = min(1.0, displacement_mm / 140)
-                            camera_distance = min_distance + (max_distance - min_distance) * normalized_displacement
-                            
-                            # Get target's rotation matrix to calculate normal and handle direction
-                            target_rotation = R.from_euler('xyz', [target[3], target[4], target[5]], degrees=False)
-                            target_rot_matrix = target_rotation.as_matrix()
-                            
-                            # Normal vector = target's Z-axis (direction coil faces)
-                            normal_vector = target_rot_matrix[:, 2]  # Z-axis column
-                            
-                            # Handle direction = target's Y-axis
-                            # Rotate camera position 90° around normal so handle appears vertical
-                            handle_vector = target_rot_matrix[:, 1]  # Y-axis column (handle direction)
-                            
-                            # Position camera along normal vector, looking back at target
-                            camera_x = target[0] + normal_vector[0] * camera_distance
-                            camera_y = target[1] + normal_vector[1] * camera_distance
-                            camera_z = target[2] + normal_vector[2] * camera_distance
 
                             if dashboard.navigation_button_pressed:
+                                # Dynamic camera: perpendicular to target plane (like InVesalius)
+                                min_distance = 30
+                                max_distance = 200
+                                displacement_mm = dashboard.module_displacement
+                                normalized_displacement = min(1.0, displacement_mm / 140)
+                                camera_distance = min_distance + (max_distance - min_distance) * normalized_displacement
+                                
+                                # Get target's rotation matrix to calculate normal and handle direction
+                                target_rotation = R.from_euler('xyz', [target[3], target[4], target[5]], degrees=False)
+                                target_rot_matrix = target_rotation.as_matrix()
+                                
+                                # Normal vector = target's Z-axis (direction coil faces)
+                                normal_vector = target_rot_matrix[:, 2]  # Z-axis column
+                                
+                                # Handle direction = target's Y-axis
+                                # Rotate camera position 90° around normal so handle appears vertical
+                                handle_vector = target_rot_matrix[:, 1]  # Y-axis column (handle direction)
+                                
+                                # Position camera along normal vector, looking back at target
+                                camera_x = target[0] + normal_vector[0] * camera_distance
+                                camera_y = target[1] + normal_vector[1] * camera_distance
+                                camera_z = target[2] + normal_vector[2] * camera_distance
+
                                 scene.move_camera(
                                     x=camera_x,
                                     y=camera_y,
