@@ -34,7 +34,6 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
             with ui.row().style("width: calc(100% - 30px); height: calc(100% - 30px); margin: 15px;"):
                 with ui.scene(grid=(0.1, 0.1)).classes('w-full h-full') as scene:
                     stl_version_seen = dashboard.stl_version
-                    # scene.run_method('cameraControls.enabled = false')
                     
                     # Coil model - will move based on displacement
                     coil_path = '/static/objects/magstim_fig8_coil.stl'
@@ -44,6 +43,8 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     # This will be positioned when target is set
                     coil_path = '/static/objects/aim.stl'
                     target_marker_stl = scene.stl(coil_path).scale(SCALE).material('red', opacity=0)
+
+                    scene.move_camera(x=0, y=80, z=200, look_at_x=0, look_at_y=0, look_at_z=0)
 
                     def refresh_surfaces():
                         nonlocal stl_version_seen
@@ -100,8 +101,8 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             target_marker_stl.material(color="yellow", opacity=1)
                             
                             # Dynamic camera: perpendicular to target plane (like InVesalius)
-                            min_distance = 1
-                            max_distance = 2.5
+                            min_distance = 60
+                            max_distance = 200
                             displacement_mm = dashboard.module_displacement
                             normalized_displacement = min(1.0, displacement_mm / 140)
                             camera_distance = min_distance + (max_distance - min_distance) * normalized_displacement
@@ -118,31 +119,23 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             handle_vector = target_rot_matrix[:, 1]  # Y-axis column (handle direction)
                             
                             # Position camera along normal vector, looking back at target
-                            camera_x = target[3] + normal_vector[0] * camera_distance
-                            camera_y = target[4] + normal_vector[1] * camera_distance
-                            camera_z = target[5] + normal_vector[2] * camera_distance
-                            #TODO fix camera
-                            # if dashboard.navigation_button_pressed:
-                            #     scene.move_camera(
-                            #         x=camera_x,
-                            #         y=camera_y,
-                            #         z=camera_z,
-                            #         look_at_x=target[0],
-                            #         look_at_y=target[1],
-                            #         look_at_z=target[2],
-                            #         up_x=-handle_vector[0],
-                            #         up_y=-handle_vector[1],
-                            #         up_z=-handle_vector[2],
-                            #     )
-                        
+                            camera_x = target[0] + normal_vector[0] * camera_distance
+                            camera_y = target[1] + normal_vector[1] * camera_distance
+                            camera_z = target[2] + normal_vector[2] * camera_distance
+
+                            if dashboard.navigation_button_pressed:
+                                scene.move_camera(
+                                    x=camera_x,
+                                    y=camera_y,
+                                    z=camera_z,
+                                    look_at_x=target[0],
+                                    look_at_y=target[1],
+                                    look_at_z=target[2],
+                                    up_x=-handle_vector[0],
+                                    up_y=-handle_vector[1],
+                                    up_z=-handle_vector[2],
+                                )
                         else:
-                            # No target - reset to origin
-                            # coil_stl.move(-4, 0, 0)
-                            # coil_stl.rotate(0,0,0)
-                            # target_marker_stl.material(opacity=0)
-                            
-                            # # Reset camera to default view
-                            # scene.move_camera(x=0, y=2, z=5, look_at_x=0, look_at_y=0, look_at_z=0)
-                            pass
+                            target_marker_stl.material(opacity=0)
                     
-                    ui.timer(0.1, update_positions)  # Update at 10 Hz
+                    ui.timer(0.05, update_positions)  # Update at 20 Hz
