@@ -196,6 +196,14 @@ class MessageHandler:
                 
                 case "Set surface colour" | "Set surface transparency":
                     self._handle_material_surface(data)
+                
+                case "Remove surfaces":
+                    surface_indexes = data.get("surface_indexes", None)
+                    if surface_indexes:
+                        for index in surface_indexes:
+                            self.dashboard.stl_urls.pop(index)
+                            self.dashboard.stl_objects[index].delete()
+
                     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
