@@ -49,19 +49,25 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                     # Disable depthWrite on coil and target so they don't block
                     # the view of head/brain surfaces behind them
                     for stl_obj in [coil_stl, target_marker_stl]:
-                        ui.run_javascript(f'''
-                            setTimeout(() => {{
-                                for (const [key, el] of Object.entries(window)) {{
-                                    if (key.startsWith("scene_")) {{
-                                        el.traverse((child) => {{
-                                            if (child.object_id === "{stl_obj.id}" && child.material) {{
-                                                child.material.depthWrite = false;
-                                            }}
-                                        }});
+                        try:
+                            ui.run_javascript(f'''
+                                setTimeout(() => {{
+                                    for (const [key, el] of Object.entries(window)) {{
+                                        if (key.startsWith("scene_")) {{
+                                            el.traverse((child) => {{
+                                                if (child.object_id === "{stl_obj.id}" && child.material) {{
+                                                    child.material.depthWrite = false;
+                                                }}
+                                            }});
+                                        }}
                                     }}
-                                }}
-                            }}, 500);
-                        ''')
+                                }}, 500);
+                            ''')
+                        except Exception:
+                            pass
+
+                    # Per-scene storage for STL objects (NOT shared across clients)
+                    local_stl_objects: dict = {}
 
                     def refresh_surfaces():
                         nonlocal stl_version_seen
@@ -75,18 +81,28 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             return
 
                         if dashboard.stl_version == stl_version_seen:
-                            first_object = next(iter(dashboard.stl_objects.values()), None)
+                            first_object = next(iter(local_stl_objects.values()), None)
                             if first_object is not None and first_object.id in scene.objects:
                                 return
 
                         stl_version_seen = dashboard.stl_version
-                        for surface_index, stl_info in dashboard.stl_urls.items():
+
+                        # Snapshot copy: safe to iterate even if message handler modifies the original
+                        stl_urls_snapshot = dict(dashboard.stl_urls)
+
+                        # Clean up local objects that were removed from stl_urls
+                        removed_keys = set(local_stl_objects) - set(stl_urls_snapshot)
+                        for key in removed_keys:
+                            obj = local_stl_objects.pop(key)
+                            obj.delete()
+
+                        for surface_index, stl_info in stl_urls_snapshot.items():
                             color = stl_info.get("color", "gray")
                             opacity = stl_info.get("transparency", 0.4)
 
-                            obj = dashboard.stl_objects.get(surface_index)
+                            obj = local_stl_objects.get(surface_index)
 
-                            if obj and obj.id in scene.objects:
+                            if obj is not None and obj.id in scene.objects:
                                 obj.material(color, opacity=opacity, side='both')
                                 continue
 
@@ -94,22 +110,23 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                             obj.material(color, opacity=opacity, side='both')
                             # Disable depthWrite so inner objects (brain) show through
                             # outer transparent objects (head).
-                            # Uses Three.js scene traversal via the global scene reference
-                            # that NiceGUI exposes as window["scene_" + elementId].
-                            ui.run_javascript(f'''
-                                setTimeout(() => {{
-                                    for (const [key, el] of Object.entries(window)) {{
-                                        if (key.startsWith("scene_")) {{
-                                            el.traverse((child) => {{
-                                                if (child.object_id === "{obj.id}" && child.material) {{
-                                                    child.material.depthWrite = false;
-                                                }}
-                                            }});
+                            try:
+                                ui.run_javascript(f'''
+                                    setTimeout(() => {{
+                                        for (const [key, el] of Object.entries(window)) {{
+                                            if (key.startsWith("scene_")) {{
+                                                el.traverse((child) => {{
+                                                    if (child.object_id === "{obj.id}" && child.material) {{
+                                                        child.material.depthWrite = false;
+                                                    }}
+                                                }});
+                                            }}
                                         }}
-                                    }}
-                                }}, 500);
-                            ''')
-                            dashboard.stl_objects[surface_index] = obj
+                                    }}, 500);
+                                ''')
+                            except Exception:
+                                pass
+                            local_stl_objects[surface_index] = obj
 
                     # Timer to update object positions from dashboard state
                     def update_positions():

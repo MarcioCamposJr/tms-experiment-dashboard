@@ -136,7 +136,6 @@ class DashboardState:
         self.intertrial_interval = '12'  # ms
 
         self.stl_urls: dict[str, str] = {}  # {'head': 'data:model/stl;base64,...'}
-        self.stl_objects: dict[str, any] = {}  # {'head': <Scene element>, ...}
         self.stl_version: int = 0  # increment whenever a new STL arrives
         self.wait_for_stl = False
 

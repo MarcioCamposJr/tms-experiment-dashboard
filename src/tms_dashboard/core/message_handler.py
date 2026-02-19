@@ -203,9 +203,7 @@ class MessageHandler:
                     surface_indexes = data.get("surface_indexes", None)
                     if surface_indexes:
                         for index in surface_indexes:
-                            if index in self.dashboard.stl_urls:
-                                self.dashboard.stl_urls.pop(index)
-                                self.dashboard.stl_objects[index].delete()
+                            self.dashboard.stl_urls.pop(index, None)
 
     def _debounce_surface_request(self):
         """Debounce surface requests to avoid overloading the socket."""
