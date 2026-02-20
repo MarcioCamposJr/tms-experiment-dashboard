@@ -42,7 +42,7 @@ class neuroOne:
         self.__ch_index_in_bundle = 0
         self.__scale_factor = 0.1
         
-        # Detecção de perda de pacotes UDP
+        # UDP packets loss detection
         self.__last_seq_no = None
         self.__packets_lost = 0
 
@@ -132,7 +132,7 @@ class neuroOne:
                 
                 divider = 1.0
                 if is_dc: divider = 100.0
-                elif is_tesla: divider = 20.0 # Tesla AC divisor
+                elif is_tesla: divider = 20.0 # Tesla AC divider
 
                 with self.__lock:
                     self.__scale_factor = 0.1 / divider
@@ -184,12 +184,12 @@ class neuroOne:
             num_triggers = struct.unpack('>H', data[2:4])[0]
             offset = 8
             for _ in range(num_triggers):
-                # Parse dos 20 bytes da estrutura Trigger
+                # Parsing 20 bytes trigger structure
                 sample_idx = struct.unpack('>Q', data[offset+8:offset+16])[0]
                 type_byte  = data[offset+16]
                 trigger_code = data[offset+17] # Código de 8 bits (0-255)
 
-                # Extração dos tipos
+                # Types extraction
                 source_id = (type_byte >> 4) & 0x0F
                 mode      = type_byte & 0x0F
                 if mode == self.trigger_type_interest.value:
@@ -302,8 +302,8 @@ if __name__ == '__main__':
                     ax.plot(time_axis, win, alpha=alpha, label=f"Trial {i+1}" if i == len(windows)-1 else "")
                 
                 ax.axvline(0, color='red', linestyle='--', label='Trigger')
-                ax.set_title(f"Janelas Capturadas (Total: {len(windows)}) - Canal {device.ch}")
-                ax.set_xlabel("Tempo (s)")
+                ax.set_title(f"Captured windows (Total: {len(windows)}) - Channel {device.ch}")
+                ax.set_xlabel("Time (s)")
                 ax.set_ylabel("Amplitude (uV)")
                 ax.grid(True)
                 plt.draw()
@@ -312,4 +312,4 @@ if __name__ == '__main__':
             time.sleep(3)
     except KeyboardInterrupt:
         device.stop()
-        print("Aplicação encerrada.")
+        print("Application closed.")
