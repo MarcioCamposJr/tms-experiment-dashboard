@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Message handler for processing navigation status updates"""
-
+import threading
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 from typing import Optional
 import time
 
@@ -31,10 +30,13 @@ class MessageHandler:
         self.target_status = None
         self.neuronaviagator_status: bool = True
 
-        # Inactivity timeout: reset dashboard if no messages for 30s
+        # Inactivity timeout: reset dashboard if no messages for 120s
         self._last_message_time = time.time()
-        self._timeout_seconds = 30.0
+        self._timeout_seconds = 120.0
         self._timed_out = False
+
+        self._debounce_seconds = 10
+        self._surface_debounce_timer = None
     
     def process_messages(self) -> Optional[dict]:
         """Process all messages in buffer and update dashboard state.
@@ -70,6 +72,7 @@ class MessageHandler:
         """
 
         if self.neuronaviagator_status:
+
             match topic:
 
                 #IMPORTANT: THIS TOPIC MUST BE THE FIRST
@@ -91,7 +94,10 @@ class MessageHandler:
                 
                 case 'Close Project':
                     self.dashboard.project_set = False
-                
+
+                case 'From Neuronavigation: Send coil pose':
+                    self._handle_coil_poses(data)
+
                 case 'From Neuronavigation: Update tracker poses':
                     self._handle_tracker_poses(data)
 
@@ -128,13 +134,13 @@ class MessageHandler:
                 case 'Open navigation menu':
                     self.dashboard.matrix_set = True
                 
-                case "Neuronavigation to Robot: Set target":
+                case "From Neuronavigation: Send target":
                     self.dashboard.target_set = True
                     
                     # Extract target position from transformation matrix
                     if 'target' in data:
-                        target_matrix = np.array(data['target'])
-                        self._handle_target_position(target_matrix)
+                        target = np.array(data['target'])
+                        self._handle_target_position(target)
 
                 case "Neuronavigation to Robot: Unset target":
                     self.dashboard.target_set = False
@@ -182,6 +188,33 @@ class MessageHandler:
                     self.robot_state.sync_from_embedded(data['config'])
                     if 'pid_factors' in data:
                         self.robot_state._sync_pids(data['pid_factors'])
+
+                case "Neuronavigation to Dashboard: Send surface":
+                    self._handle_surface_stl(data)
+                    self.dashboard.wait_for_stl = False
+
+                case "Fold surface task":
+                    self._debounce_surface_request()
+                
+                case "Set surface colour" | "Set surface transparency":
+                    self._handle_material_surface(data)
+                
+                case "Remove surfaces":
+                    surface_indexes = data.get("surface_indexes", None)
+                    if surface_indexes:
+                        for index in surface_indexes:
+                            self.dashboard.stl_urls.pop(index, None)
+
+    def _debounce_surface_request(self):
+        """Debounce surface requests to avoid overloading the socket."""
+        if self._surface_debounce_timer is not None:
+            self._surface_debounce_timer.cancel()
+        self._surface_debounce_timer = threading.Timer(
+            self._debounce_seconds,
+            self.message_emit.request_invesalius_mesh
+        )
+        self._surface_debounce_timer.start()
+
                     
     def _handle_image_fiducial(self, data):
         """Handle image fiducial setting/unsetting."""
@@ -210,6 +243,13 @@ class MessageHandler:
             if self.dashboard.image_NA_set and self.dashboard.image_RE_set and self.dashboard.image_LE_set:
                 self.dashboard.image_fiducials= True
     
+    def _handle_coil_poses(self, data):
+        poses = data['coord']
+        self.dashboard.coil_location = (
+            poses[0], -poses[1], poses[2],
+            np.radians(poses[4]), -np.radians(poses[3]), np.radians(poses[5])+1.5708
+        )
+
     def _handle_tracker_poses(self, data):
         """Handle tracker pose updates."""
         poses = data['poses']
@@ -222,10 +262,6 @@ class MessageHandler:
             poses[1][0], poses[1][1], poses[1][2],
             np.radians(poses[1][3]), np.radians(poses[1][4]), np.radians(poses[1][5])
         )
-        self.dashboard.coil_location = (
-            poses[2][0], poses[2][1], poses[2][2],
-            np.radians(poses[2][3]), np.radians(poses[2][4]), np.radians(poses[2][5])
-        )
 
     def _handle_displacement(self, data):
         """Handle displacement to target update."""
@@ -236,17 +272,63 @@ class MessageHandler:
         # Update displacement history for plotting
         self.dashboard.add_displacement_sample()
     
-    def _handle_target_position(self, target_matrix):
-        # Check if it's a 4x4 transformation matrix
-        if target_matrix.shape == (4, 4):
-            # Extract position from matrix (X, Y, Z)
-            x, y, z = target_matrix[0, 3], target_matrix[1, 3], target_matrix[2, 3]
-            
-            # Extract rotation using sxyz Euler (same as InVesalius uses)
-            rot = R.from_matrix(target_matrix[:3, :3])
-            rx, ry, rz = rot.as_euler('xyz', degrees=False)  # radians
-            
-            # Store in InVesalius coordinate system (same as displacement)
-            # Three.js transformation will be applied in navigation_3d.py
-            self.dashboard.target_location = (x, y, z, rx, ry, rz)
+    def _handle_target_position(self, target):
+        # Store in InVesalius coordinate system (same as displacement)
+        self.dashboard.target_location = (
+            target[0], -target[1], target[2],
+            np.radians(target[4]), -np.radians(target[3]), np.radians(target[5])+1.5708
+        )
+
+    def _handle_surface_stl(self, data):
+        """Handle incoming STL surface (base64) from InVesalius."""
+        try:
+            name = data.get('model_name')
+            stl_b64 = data.get('stl_b64')
+            rgb_normalized = data.get('color')
+            surface_index = data.get('surface_index')
+            transparency = 1 - data.get("transparency")
+
+            if not (name and stl_b64):
+                print("Error: Missing model name or STL data.")
+                return
+
+            print(f"Processing surface for model: {name}")
+
+            rgb_255 = [int(x * 255) for x in rgb_normalized]
+            hex_color = "#{:02x}{:02x}{:02x}".format(*rgb_255)
+
+            # Generate data URL
+            # NOTE: If using data URLs directly for binary STL, you'd handle differently.
+            data_url = f'data:model/stl;base64,{stl_b64}'
+
+            # Update dashboard
+            self.dashboard.stl_urls[surface_index] = {
+                "name": name,
+                "url": data_url,
+                "color": hex_color,
+                "transparency": transparency
+            }
+            self.dashboard.stl_version += 1
+            print(f"Updated dashboard for model: {name}")
+
+        except Exception as e:
+            print(f"Unhandled exception in processing surface: {e}")
+
+    def _handle_material_surface(self, data):
+        if "surface_index" in data:
+            surface_index = data["surface_index"]
+            if surface_index in self.dashboard.stl_urls:
+                if "transparency" in data:
+                    prop_material, key = 1 - data["transparency"], "transparency"
+                elif "colour" in data:
+                    color, key = data["colour"], "color"
+                    rgb_255 = [int(x * 255) for x in color]
+                    prop_material = "#{:02x}{:02x}{:02x}".format(*rgb_255)
+                else:
+                    return
+                self.dashboard.stl_urls[surface_index][key] = prop_material
+                self.dashboard.stl_version += 1
+
+            else:
+                self.message_emit.request_invesalius_mesh()
 
