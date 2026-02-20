@@ -58,7 +58,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             placeholder='e.g., COM1 or /dev/ttyUSB0'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 3: Movement Algorithm =====
+                # ===== SECTION 2: Movement Algorithm =====
                 with ui.expansion('Movement Settings', icon='route', value=True).classes('w-full'):
                     with ui.grid(columns=3).classes('w-full gap-4'):
                         inputs['movement_algorithm'] = ui.select(
@@ -81,7 +81,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.0f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 4: Speed Settings =====
+                # ===== SECTION 3: Speed Settings =====
                 with ui.expansion('Speed & Timing', icon='speed', value=True).classes('w-full'):
                     with ui.grid(columns=3).classes('w-full gap-4'):
                         inputs['default_speed_ratio'] = ui.number(
@@ -105,7 +105,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.1f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 5: Thresholds =====
+                # ===== SECTION 4: Thresholds =====
                 with ui.expansion('Thresholds', icon='straighten', value=True).classes('w-full'):
                     with ui.grid(columns=2).classes('w-full gap-4'):
                         inputs['translation_threshold'] = ui.number(
@@ -122,7 +122,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.0f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 6: PID Tuning =====
+                # ===== SECTION 5: PID Tuning =====
                 # Determina estado inicial de habilitação
                 is_pid_algorithm = robot_config.movement_algorithm == 'directly_PID'
                 is_using_sensor = robot_config.use_force_sensor or robot_config.use_pressure_sensor
@@ -240,7 +240,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                 update_pid_section_state()
 
                 
-                # ===== SECTION 7: Safety & Debug =====
+                # ===== SECTION 6: Safety & Debug =====
                 with ui.expansion('Safety & Debug', icon='bug_report').classes('w-full'):
                     with ui.column().classes('w-full gap-2'):
                         inputs['stop_robot_if_head_not_visible'] = ui.switch(

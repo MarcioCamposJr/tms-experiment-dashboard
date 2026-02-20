@@ -26,3 +26,6 @@ CSV_PATH = DATA_DIR / CSV_FILE
 # Ensure data directory exists
 DATA_DIR.mkdir(exist_ok=True)
 
+NEURONE_IP = '192.168.200.220'
+NEURONE_PORT = 50000
+

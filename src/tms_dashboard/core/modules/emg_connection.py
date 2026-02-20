@@ -4,19 +4,8 @@ import time
 import threading
 from collections import deque
 
-from tms_dashboard.constants import TriggerType
-
-NEURONE_IP = '192.168.200.220'
-DATA_PORT = 50000
-JOIN_PORT = 5050
-BUFFER_SIZE = 65535
-
-class FrameType:
-    MEASUREMENT_START = 1
-    SAMPLES = 2
-    TRIGGER = 3
-    MEASUREMENT_END = 4
-    JOIN = 128
+from tms_dashboard.constants import TriggerType, FrameType, JOIN_PORT, BUFFER_SIZE
+from tms_dashboard.config import NEURONE_IP, NEURONE_PORT
 
 class neuroOne:
     def __init__(self, num_trial: int, t_min, t_max, ch: int, trigger_type_interest: TriggerType):
@@ -50,7 +39,7 @@ class neuroOne:
         self.trigger_type_interest = trigger_type_interest
 
         try:
-            self.__sock.bind(('', DATA_PORT))
+            self.__sock.bind(('', NEURONE_PORT))
         except Exception as e:
             print(f"Erro no Bind: {e}")
     
@@ -273,41 +262,3 @@ def int24_to_int32(data_bytes):
         return (combined >> 8) - (1 << 24)
     else:
         return combined >> 8
-
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    device = neuroOne(10, -0.01, 0.04, 33, TriggerType.STIMULUS)
-    device.start()
-
-    plt.ion()
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    try:
-        while True:
-            # Simulando o processamento dos dados coletados a cada 100ms
-            windows = device.get_triggered_window()
-            if windows is not None and len(windows)>0:
-                ax.clear()
-                # Cria o eixo do tempo baseado na janela definida
-                # O ponto 0 será exatamente o trigger
-                time_axis = np.linspace(device.t_min, device.t_max, len(windows[0]))
-                
-                for i, win in enumerate(windows):
-                    alpha = 0.3 if i < len(windows)-1 else 1.0 # Destaque para a última
-                    ax.plot(time_axis, win, alpha=alpha, label=f"Trial {i+1}" if i == len(windows)-1 else "")
-                
-                ax.axvline(0, color='red', linestyle='--', label='Trigger')
-                ax.set_title(f"Janelas Capturadas (Total: {len(windows)}) - Canal {device.ch}")
-                ax.set_xlabel("Tempo (s)")
-                ax.set_ylabel("Amplitude (uV)")
-                ax.grid(True)
-                plt.draw()
-                plt.pause(0.01)
-            
-            time.sleep(3)
-    except KeyboardInterrupt:
-        device.stop()
-        print("Aplicação encerrada.")

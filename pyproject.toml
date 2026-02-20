@@ -10,13 +10,9 @@ dependencies = [
     "python-socketio",  # Para relay server connection
     "uvicorn",
     "nest-asyncio",
-    "requests",
     "websocket-client",
     "websockets",
     "numpy",
-    "opencv-python",
-    "pynput",
-    "matplotlib",
     "scipy",
     "python-dotenv",
     "nicegui>=3.4.1",

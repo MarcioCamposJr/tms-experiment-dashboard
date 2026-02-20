@@ -80,56 +80,10 @@ python main.py
 ### **Acess:**
 - NiceGUI: http://localhost:8084
 
-## 🤝 Collaborators
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/crondinoni" title="Nome">
-        <img src="https://github.com/crondinoni.png" width="100px;" alt="Foto do/a Nome"/><br>
-          <b>Carlo Rondinoni</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/MarcioCamposJr" title="Nome">
-        <img src="https://github.com/MarcioCamposJr.png" width="100px;" alt="Foto do/a Nome"/><br>
-        <sub>
-          <b>Marcio Campos</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/thaismarchetti" title="Nome">
-        <img src="https://github.com/thaismarchetti.png" width="100px;" alt="Foto do/a Nome"/><br>
-        <sub>
-          <b>Thais Marchetti</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/LucasBetioli123" title="Nome">
-        <img src="https://github.com/LucasBetioli123.png" width="100px;" alt="Foto do/a Nome"/><br>
-        <sub>
-          <b>Lucas Betioli</b>
-        </sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/vhemalheiro" title="Nome">
-        <img src="https://github.com/vhemalheiro.png" width="100px;" alt="Foto do/a Nome"/><br>
-        <sub>
-          <b>Victor Malheiros</b>
-        </sub>
-      </a>
-    </td>
-  </tr>
-</table>
-
-##  Licença
+##  Licency
 
 This project is licensed. Check the file. [LICENÇA](LICENSE.md) for further details.
 
-## NeuroMat Support
+## Supported by NeuroMat
 
 This work is supported by NeuroMat - Centro de Pesquisa, Inovação e Difusão em Neuromatemática (CEPID NeuroMat) established in 2013 at the University of São Paulo (USP). Homepage: http://neuromat.numec.prp.usp.br
