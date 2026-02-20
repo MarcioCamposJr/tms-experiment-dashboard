@@ -22,7 +22,7 @@ class DataLogger:
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
     
     def save_experiment_data(self, data: Dict[str, Any]) -> bool:
-        """Save experiment data to CSV file.
+        """Saves experiment data to CSV file.
         
         Args:
             data: Dictionary with experiment data fields
@@ -48,7 +48,7 @@ class DataLogger:
             
             return True
         except Exception as e:
-            print(f"Error saving data: {e}")
+            print(f"Error while saving data: {e}")
             return False
     
     @staticmethod
@@ -68,7 +68,7 @@ class DataLogger:
         trials_per_condition: str = "",
         intertrial_interval: str = ""
     ) -> Dict[str, str]:
-        """Create a dictionary with experiment data for logging.
+        """Creates a dictionary with experiment data for logging.
         
         Args:
             All experiment parameters as strings

@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 setup(
     name="Biomag TMS Experiment Dashboard",
     version="0.1.0",
-    description="Interface gráfica em formato web para visualização e controle de eventos com o uso do InVesalius durante experimentos de TMS e EMG.",
-    author="Carlo Rondinoni",
-    author_email="crondi@alumni.usp.br",
+    description="Web page Graphical User Interface (GUI) for event visualization and control during InVesalius Neuronavigator TMS/EMG experiments.",
+    author="Biomag Lab - FFCLRP - USP - Brazil",
+    author_email="biomaglab@gmail.com",
     packages=find_packages(),
     install_requires=[
         "nicegui",
@@ -13,8 +13,6 @@ setup(
         "pandas",
         "numpy",
         "matplotlib",
-        "Pillow",
-        "altair",
         "python-socketio",
     ],
     python_requires='>=3',

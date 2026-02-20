@@ -6,7 +6,7 @@ from nicegui.elements.label import Label
 from typing import Dict
 
 
-# Modern Color Palette - Clean and Professional
+# Modern Color Palette
 COLORS = {
     'success': '#10b981',      # Green
     'error': '#ef4444',        # Red

@@ -15,7 +15,7 @@ class MessageHandler:
     """Processes messages from socket client and updates dashboard state."""
     
     def __init__(self, socket_client: SocketClient, dashboard_state: DashboardState, robot_state: RobotConfigState, message_emit: Message2Server):
-        """Initialize message handler.
+        """Initializes message handler.
         
         Args:
             socket_client: SocketClient instance to get messages from
@@ -64,7 +64,7 @@ class MessageHandler:
         return self.target_status
     
     def _handle_message(self, topic: str, data):
-        """Handle individual message based on topic.
+        """Handles individual message based on topic.
         
         Args:
             topic: Message topic string
@@ -273,7 +273,7 @@ class MessageHandler:
         self.dashboard.add_displacement_sample()
     
     def _handle_target_position(self, target):
-        # Store in InVesalius coordinate system (same as displacement)
+        # Stores in InVesalius coordinate system (same as displacement)
         self.dashboard.target_location = (
             target[0], -target[1], target[2],
             np.radians(target[4]), -np.radians(target[3]), np.radians(target[5])+1.5708

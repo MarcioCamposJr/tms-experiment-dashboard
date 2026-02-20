@@ -58,7 +58,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             placeholder='e.g., COM1 or /dev/ttyUSB0'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 3: Movement Algorithm =====
+                # ===== SECTION 2: Movement Algorithm =====
                 with ui.expansion('Movement Settings', icon='route', value=True).classes('w-full'):
                     with ui.grid(columns=3).classes('w-full gap-4'):
                         inputs['movement_algorithm'] = ui.select(
@@ -81,7 +81,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.0f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 4: Speed Settings =====
+                # ===== SECTION 3: Speed Settings =====
                 with ui.expansion('Speed & Timing', icon='speed', value=True).classes('w-full'):
                     with ui.grid(columns=3).classes('w-full gap-4'):
                         inputs['default_speed_ratio'] = ui.number(
@@ -105,7 +105,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.1f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 5: Thresholds =====
+                # ===== SECTION 4: Thresholds =====
                 with ui.expansion('Thresholds', icon='straighten', value=True).classes('w-full'):
                     with ui.grid(columns=2).classes('w-full gap-4'):
                         inputs['translation_threshold'] = ui.number(
@@ -122,20 +122,20 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             format='%.0f'
                         ).classes('w-full').props('outlined dense')
                 
-                # ===== SECTION 6: PID Tuning =====
-                # Determina estado inicial de habilitação
+                # ===== SECTION 5: PID Tuning =====
+                # Determines the initial habilitation state
                 is_pid_algorithm = robot_config.movement_algorithm == 'directly_PID'
                 is_using_sensor = robot_config.use_force_sensor or robot_config.use_pressure_sensor
                 
                 with ui.expansion('PID Tuning', icon='tune', value=False).classes('w-full') as pid_expansion:
-                    # Mensagem de aviso quando PID está desabilitado
+                    # Warning message when PID is disabled
                     pid_warning = ui.label('⚠️ PID Tuning is only available when using directly_PID algorithm').style(
                         'color: #f59e0b; font-style: italic; display: none;'
                     )
                     
                     pid_inputs = {}
                     
-                    # Container principal do PID (será desabilitado visualmente)
+                    # Main PID container (disabled when started)
                     with ui.column().classes('w-full') as pid_content:
                         # Translation PID (X, Y, Z)
                         ui.label('Translation Control (X, Y, Z)').style('font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #10b981;')
@@ -164,7 +164,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             pid_inputs['y_stiffness'] = ui.number(value=robot_config.pid_y.stiffness, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                             pid_inputs['y_damping'] = ui.number(value=robot_config.pid_y.damping, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                             
-                            # Z axis (pode ser bloqueado se usar sensor)
+                            # Z axis (may be blocked when force sensor is enabled)
                             z_label = ui.label('Z').style('font-weight: 600; color: #10b981; align-self: center;')
                             pid_inputs['z_kp'] = ui.number(value=robot_config.pid_z.kp, min=0, max=10, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                             pid_inputs['z_ki'] = ui.number(value=robot_config.pid_z.ki, min=0, max=10, step=0.001, format='%.4f').props('outlined dense').classes('w-full')
@@ -172,7 +172,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                             pid_inputs['z_stiffness'] = ui.number(value=robot_config.pid_z.stiffness, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                             pid_inputs['z_damping'] = ui.number(value=robot_config.pid_z.damping, min=0, max=1, step=0.01, format='%.3f').props('outlined dense').classes('w-full')
                         
-                        # Aviso para eixo Z bloqueado
+                        # Warning when Z-axis is blocked
                         z_axis_warning = ui.label('⚠️ Z-axis is controlled by force/pressure sensor').style(
                             'color: #ef4444; font-style: italic; font-size: 0.85rem; display: none;'
                         )
@@ -200,18 +200,18 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                     
                     inputs['pid'] = pid_inputs
                 
-                # Lista de inputs do eixo Z para desabilitar
+                # input list for disabled Z-axis
                 z_axis_inputs = [
                     pid_inputs['z_kp'], pid_inputs['z_ki'], pid_inputs['z_kd'],
                     pid_inputs['z_stiffness'], pid_inputs['z_damping']
                 ]
                 
                 def update_pid_section_state():
-                    """Atualiza estado de habilitação da seção PID baseado no algoritmo e sensores."""
+                    """Updates the enabled state of the PID section based on algorithm and sensors."""
                     is_pid_mode = inputs['movement_algorithm'].value == 'directly_PID'
                     using_sensor = inputs['use_force_sensor'].value or inputs['use_pressure_sensor'].value
                     
-                    # Controla visibilidade do aviso e opacidade do conteúdo PID
+                    # Controls warning visibility and opacity of PID content
                     if is_pid_mode:
                         pid_warning.style('display: none;')
                         pid_content.style('opacity: 1; pointer-events: auto;')
@@ -219,7 +219,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                         pid_warning.style('display: block;')
                         pid_content.style('opacity: 0.4; pointer-events: none;')
                     
-                    # Controla inputs do eixo Z baseado nos sensores
+                    # Controls inputs of Z-axis based on sensors
                     if using_sensor and is_pid_mode:
                         z_axis_warning.style('display: block;')
                         z_label.style('font-weight: 600; color: #9ca3af; align-self: center;')
@@ -231,16 +231,16 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                         for inp in z_axis_inputs:
                             inp.enable()
                 
-                # Configura callbacks para atualizar estado quando mudar algoritmo ou sensores
+                # Configures callbacks to update the state when algorithm or sensors are changed
                 inputs['movement_algorithm'].on('update:model-value', lambda _: update_pid_section_state())
                 inputs['use_force_sensor'].on('update:model-value', lambda _: update_pid_section_state())
                 inputs['use_pressure_sensor'].on('update:model-value', lambda _: update_pid_section_state())
                 
-                # Aplica estado inicial
+                # Applies initial state
                 update_pid_section_state()
 
                 
-                # ===== SECTION 7: Safety & Debug =====
+                # ===== SECTION 6: Safety & Debug =====
                 with ui.expansion('Safety & Debug', icon='bug_report').classes('w-full'):
                     with ui.column().classes('w-full gap-2'):
                         inputs['stop_robot_if_head_not_visible'] = ui.switch(
@@ -307,7 +307,7 @@ async def open_robot_config(robot_config: RobotConfigState, message_emit: Messag
                         stiffness=pid['rz_stiffness'].value, damping=pid['rz_damping'].value
                     )
                     
-                    # Validate
+                    # Validation
                     is_valid, error_msg = robot_config.validate()
                     if not is_valid:
                         ui.notify(f'Validation error: {error_msg}', type='negative', position='top')

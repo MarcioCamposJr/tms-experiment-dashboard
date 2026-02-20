@@ -12,7 +12,7 @@ from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_in
 
 @dataclass
 class DashboardState:
-    """Central state object for the TMS experiment dashboard.
+    """Centrals state object for the TMS experiment dashboard.
     
     This class holds all state information including:
     - Connection status (project, camera, robot)
@@ -25,7 +25,7 @@ class DashboardState:
         self.__set_init_state()
     
     def __set_init_state(self):
-                # Navigation button status
+        # Navigation button status
         self.navigation_button_pressed = False
         self.free_drive_robot_pressed = False
         self.move_upward_robot_pressed = False
@@ -178,10 +178,10 @@ class DashboardState:
 
         self.mep_history = new_mep_history
         self.mep_history_baseline = set_apply_baseline_all(
-                                baseline_start_ms=5,      # Início do baseline em 5ms
-                                baseline_end_ms=20,        # Fim do baseline em 20ms
-                                signal_start_ms= t_min,  # Sinal começa em -10ms
-                                signal_end_ms= t_max,    # Sinal termina em 40ms
+                                baseline_start_ms=5,      # Baseline start at 5ms
+                                baseline_end_ms=20,        # Baseline end at 20ms
+                                signal_start_ms= t_min,  # Signal starts at -10ms
+                                signal_end_ms= t_max,    # Signal ends at 40ms
                                 data_windows=new_mep_history, 
                                 sampling_rate=sampling_rate
                             )

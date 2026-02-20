@@ -6,8 +6,10 @@ from collections import deque
 
 from tms_dashboard.constants import TriggerType
 
-NEURONE_IP = '192.168.200.220'
+# Default IP and port for accessing NeurOne Digital Out data stream
+NEURONE_IP = '192.168.200.220' 
 DATA_PORT = 50000
+
 JOIN_PORT = 5050
 BUFFER_SIZE = 65535
 
@@ -22,7 +24,7 @@ class neuroOne:
     def __init__(self, num_trial: int, t_min, t_max, ch: int, trigger_type_interest: TriggerType):
         self.__sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__sock.settimeout(0.1)  # Reduzido de 1.0s para melhor responsividade
+        self.__sock.settimeout(0.1)  # Defined at 1.0s for a better responsivity
         self.__last_join_time = 0
 
         self.__connected = False
@@ -101,13 +103,13 @@ class neuroOne:
             self.__last_join_time = current_time
 
     def __send_join_packet(self):
-        """ Envia o pacote JOIN para destravar o streaming do hardware """
-        join_packet = struct.pack('>B3x', FrameType.JOIN) # Tipo 128 + 3 bytes padding
+        """ Sends JOIN packet to unlock hardware streaming """
+        join_packet = struct.pack('>B3x', FrameType.JOIN) # Type 128 + 3 bytes padding
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.sendto(join_packet, (NEURONE_IP, JOIN_PORT))
         except Exception as e:
-            print(f"Erro ao enviar JOIN: {e}")
+            print(f"Error while sending JOIN packet: {e}")
         
     def __process_pack(self, frame_type, data):
         if frame_type == FrameType.MEASUREMENT_START:
@@ -149,7 +151,7 @@ class neuroOne:
                     if seq_no != expected:
                         lost = (seq_no - expected) % (2**32)
                         self.__packets_lost += lost
-                        print(f"{lost} pacote(s) UDP perdido(s)! Total acumulado: {self.__packets_lost}")
+                        print(f"{lost} UDP packet(s) lost! Accrued total: {self.__packets_lost}")
                 
                 self.__last_seq_no = seq_no
             
@@ -196,7 +198,7 @@ class neuroOne:
                             'idx': sample_idx,
                             'code': trigger_code,
                         })
-                        print(f"Trigger detectado: {TriggerType(mode).name} (Código: {trigger_code}) na amostra {sample_idx}")
+                        print(f"Trigger detected: {TriggerType(mode).name} (Code: {trigger_code}) in sample {sample_idx}")
 
                 offset += 20
     
@@ -227,7 +229,7 @@ class neuroOne:
                 self.__pending_triggers.remove(trig)
     
     def get_triggered_window(self):
-        """Retorna cópia thread-safe das janelas capturadas."""
+        """Returns thread-safe cpy of captured windows."""
         if self.__connected and self.__status_meansurament and self.__running:
             with self.__lock:
                 return list(self.__triggered_windows_data)
@@ -237,7 +239,7 @@ class neuroOne:
         return self.__sampling_rate
     
     def get_statistics(self):
-        """Retorna estatísticas de conexão para debugging."""
+        """Returns connection stats for debugging."""
         with self.__lock:
             return {
                 'packets_lost': self.__packets_lost,
@@ -262,14 +264,14 @@ class neuroOne:
 
 def int24_to_int32(data_bytes):
     """ 
-    Converte 3 bytes (int24 big-endian) para int32 com sinal.
-    Replica a lógica C++: (val[0]<<24 | val[1]<<16 | val[2]<<8) >> 8
+    Converts 3 bytes (int24 big-endian) to signed int32.
+    Replicates C++ logic: (val[0]<<24 | val[1]<<16 | val[2]<<8) >> 8
     """
-    # Monta o valor deslocado para a esquerda para preservar o sinal no bit 31
+    # Builds value shifted to the left to preserve the signal in bit 31
     combined = (data_bytes[0] << 24) | (data_bytes[1] << 16) | (data_bytes[2] << 8)
     
-    # Em Python, precisamos simular o comportamento do shift aritmético de 32 bits
-    if combined & 0x80000000: # Se o bit de sinal (MSB) estiver ativo
+    # In Python, we need to simulate the behavior of 32 bits arithmetic shift
+    if combined & 0x80000000: # In the case signal bit (MSB) is active
         return (combined >> 8) - (1 << 24)
     else:
         return combined >> 8
@@ -287,16 +289,16 @@ if __name__ == '__main__':
 
     try:
         while True:
-            # Simulando o processamento dos dados coletados a cada 100ms
+            # Simulating data processing every 100ms
             windows = device.get_triggered_window()
             if windows is not None and len(windows)>0:
                 ax.clear()
-                # Cria o eixo do tempo baseado na janela definida
-                # O ponto 0 será exatamente o trigger
+                # Creates the timeline based on the defined window
+                # Zero time will be exactly at trigger time point
                 time_axis = np.linspace(device.t_min, device.t_max, len(windows[0]))
                 
                 for i, win in enumerate(windows):
-                    alpha = 0.3 if i < len(windows)-1 else 1.0 # Destaque para a última
+                    alpha = 0.3 if i < len(windows)-1 else 1.0 # Highlights the last acquired window
                     ax.plot(time_axis, win, alpha=alpha, label=f"Trial {i+1}" if i == len(windows)-1 else "")
                 
                 ax.axvline(0, color='red', linestyle='--', label='Trigger')

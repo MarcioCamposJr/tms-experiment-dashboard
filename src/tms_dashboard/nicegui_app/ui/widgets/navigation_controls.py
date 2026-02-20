@@ -9,7 +9,7 @@ from tms_dashboard.core.dashboard_state import DashboardState
 from tms_dashboard.nicegui_app.ui_state import DashboardUI
 
 def create_navigation_controls(message_emit, ui_state: DashboardUI):
-    """Create navigation and robot control buttons.
+    """Creates navigation and robot control buttons.
     
     Contains two columns:
     - Navigation Controls: START NAVIGATION, Create Target
