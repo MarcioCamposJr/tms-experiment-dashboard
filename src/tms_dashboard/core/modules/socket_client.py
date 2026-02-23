@@ -15,7 +15,7 @@ logging.getLogger('engineio').setLevel(logging.WARNING)
 
 
 class SocketClient:
-    """Socket.IO client que roda em thread dedicada para não bloquear NiceGUI."""
+    """Socket.IO client runs in a dedicated thread so it do s not block NiceGUI."""
     
     def __init__(self, remote_host: str):
         """Initialize socket client.
@@ -31,8 +31,8 @@ class SocketClient:
         self.__sio: Optional[socketio.Client] = None
     
     def __run_in_thread(self):
-        """Executa Socket.IO client em thread isolada."""
-        # Criar novo cliente Socket.IO nesta thread
+        """Executes Socket.IO client isolated thread."""
+        # Creates new Socket.IO clinet in this thread
         self.__sio = socketio.Client(
             logger=False,
             engineio_logger=False,
@@ -42,7 +42,7 @@ class SocketClient:
             reconnection_delay_max=5
         )
         
-        # Registrar callbacks
+        # Registrates callbacks
         @self.__sio.event
         def connect():
             print(f"✓ Socket.IO connected to {self.__remote_host}")
@@ -59,15 +59,15 @@ class SocketClient:
         
         @self.__sio.on('to_robot')
         def on_to_robot(msg):
-            """Recebe mensagens do canal to_robot."""
+            """Receives menssages from channel to_robot."""
             self.__buffer.put(msg)
         
         @self.__sio.on('to_neuronavigation')
         def on_to_neuronavigation(msg):
-            """Recebe mensagens do canal to_neuronavigation."""
+            """Receives messages from channel to_neuronavigation."""
             self.__buffer.put(msg)
         
-        # Loop de conexão com retry
+        # Connection Loop using retry
         while not self.__stop_event.is_set():
             try:
                 if not self.__sio.connected:
@@ -77,7 +77,7 @@ class SocketClient:
                         wait_timeout=5,
                         transports=['websocket', 'polling']
                     )
-                    # Manter conexão viva
+                    # Leep connection active
                     while self.__sio.connected and not self.__stop_event.is_set():
                         time.sleep(1)
                         
@@ -86,12 +86,12 @@ class SocketClient:
                     print(f"Connection error: {e}, retrying in 2s...")
                     time.sleep(2)
         
-        # Cleanup
+        # Clean up
         if self.__sio and self.__sio.connected:
             self.__sio.disconnect()
     
     def connect(self):
-        """Inicia Socket.IO client em thread isolada (não bloqueia)."""
+        """Starts client Socket.IO in an isolated thread (no block)."""
         if self.__thread is None or not self.__thread.is_alive():
             self.__stop_event.clear()
             self.__thread = threading.Thread(
@@ -103,7 +103,7 @@ class SocketClient:
             print("✓ Socket.IO client started in isolated thread")
     
     def disconnect(self):
-        """Para o Socket.IO client."""
+        """For Socket.IO client."""
         self.__stop_event.set()
         if self.__thread and self.__thread.is_alive():
             self.__thread.join(timeout=5)
@@ -127,10 +127,10 @@ class SocketClient:
             return False
     
     def get_buffer(self) -> list:
-        """Retorna todas as mensagens do buffer (não bloqueia).
+        """Returns all buffer messages (no block).
         
         Returns:
-            Lista de mensagens recebidas desde a última chamada
+            Message list received since last call
         """
         messages = []
         while not self.__buffer.empty():
@@ -146,5 +146,5 @@ class SocketClient:
     
     @property
     def is_connected(self) -> bool:
-        """Verifica se está conectado ao servidor."""
+        """Verifies whether the system is connected to the server."""
         return self.__connected

@@ -13,7 +13,7 @@ from tms_dashboard.config import OBJECTS_DIR
 from tms_dashboard.utils.coordinate_transform import compute_relative_pose
 
 def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message2Server):
-    """Create detailed 3D scene with STL models of probe, head, coil, and target.
+    """Creates detailed 3D scene with STL models of probe, head, coil, and target.
     
     Args:
         dashboard: DashboardState instance for accessing object positions

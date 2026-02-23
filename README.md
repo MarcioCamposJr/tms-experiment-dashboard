@@ -77,10 +77,10 @@ uv run python main.py
 python main.py
 ```
 
-### **Acess:**
-- NiceGUI: http://localhost:8084
+### **To acess the web GUI:**
+- Open your web browser and navigate to: http://localhost:8084
 
-##  Licency
+##  License
 
 This project is licensed. Check the file. [LICENÇA](LICENSE.md) for further details.
 

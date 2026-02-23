@@ -4,7 +4,6 @@
 TMS Dashboard - Intelligent Framework Auto-detection Entry Point
 
 This script automatically detects and launches the appropriate dashboard framework.
-Priority: NiceGUI → Streamlit
 """
 
 import sys
@@ -20,10 +19,10 @@ def main():
     """Main entry point with framework auto-detection."""
     
     # Mensagem de inicialização (apenas uma vez)
-    print("Iniciando TMS Dashboard com NiceGUI...")
+    print("Starting TMS Dashboard...")
     print(f"Acesse: http://localhost:8084")
     
-    # Try NiceGUI first
+    # Running NiceGUI for Biomag TMS Dashboard
     try:
         from tms_dashboard.nicegui_app.run import main as nicegui_run
         nicegui_run()

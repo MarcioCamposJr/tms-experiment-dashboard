@@ -52,10 +52,6 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit, ui_state: Das
                 'background-color: #f9fafb;'
             ):
                 create_mep_panel(ui_state)
-                # ui.label('3D Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px;')
-                
-                # with ui.column().classes('w-full').style('flex: 1; min-height: 0;'):
-                #     create_3d_scene_with_models(dashboard)
             
             # Status Items (40% width)
             with ui.card().props('flat').style(
@@ -68,6 +64,7 @@ def create_dashboard_tabs(dashboard: DashboardState, message_emit, ui_state: Das
                 'flex-direction: column;'
             ):
                 create_status_widgets(ui_state)
+                
             # Status Items (40% width)
             with ui.card().props('flat').style(
                 'flex: 18; '

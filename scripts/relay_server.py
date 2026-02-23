@@ -28,9 +28,6 @@ import uvicorn
 nest_asyncio.apply()
 
 default_host = '127.0.0.1'
-#default_host = '169.254.128.134' # host ip 1
-#default_host = '169.254.52.180' # host ip 2
-#default_host = '192.168.200.202' # host ip 3
 
 if len(sys.argv) == 3:
     host = sys.argv[1]

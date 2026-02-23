@@ -180,29 +180,30 @@ class UpdateDashboard:
         if ui_state.mep_plot is None:
             return
             
-        # Obter dados
+        # Fetch data
         t_min_ms = self.emg_connection.t_min * 1000
         t_max_ms = self.emg_connection.t_max * 1000
         
-        # Se não houver dados, não faz nada
+        # No action when no data available
         if not dashboard.mep_history_baseline:
             return
             
         mep_history = list(dashboard.mep_history_baseline)[-num_windows:]
         mep_p2p_history = list(dashboard.mep_p2p_history_baseline)[-num_windows:]
-        # Eixo X
+
+        # X Axis
         t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
         
         traces = []
         
-        # Histórico (cinza)
+        # History (gray lines)
         for i, mep in enumerate(mep_history[:-1]):
             traces.append(go.Scatter(
                 x=t_ms, y=mep,
                 mode='lines',
                 line=dict(color='rgba(128, 128, 128, 0.5)', width=1.5),
                 showlegend=False,
-                hoverinfo='skip', # Otimização: ignora hover no histórico
+                hoverinfo='skip', # Optimization: ignores hover on history 
                 name=f'Trial {i}'
             ))
             # Annotation for history (optional, keeps it cleaner if only on last? User asked for "on the curve")
@@ -218,7 +219,7 @@ class UpdateDashboard:
                     hoverinfo='skip'
                 ))
             
-        # Último (vermelho destaque)
+        # Last MEP (highlighted in red color)
         if len(mep_history) > 0:
             last_mep = mep_history[-1]
             traces.append(go.Scatter(
@@ -240,12 +241,12 @@ class UpdateDashboard:
                     hoverinfo='skip'
                 ))
             
-        # Atualiza figura
-        # Substituímos a figura inteira para evitar o erro de validação do Plotly
+        # Updates figure
+        # Updating whole chart to avoid Plotly's validation errors
         # "The data property of a figure may only be assigned..."
-        # Mantemos o layout original
+        # Keeping original layout
         ui_state.mep_plot.figure = go.Figure(data=traces, layout=ui_state.mep_plot.figure.layout)
-        # Força update
+        # Forces update
         ui_state.mep_plot.update()
 
     def update_buttons(self, ui_state):

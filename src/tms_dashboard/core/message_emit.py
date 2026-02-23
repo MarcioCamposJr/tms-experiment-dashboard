@@ -62,7 +62,7 @@ class Message2Server():
         self.__send_message2robot(topic="Neuronavigation to Robot: Request config")
     
     def send_robot_config(self, robot_config):
-        """Send robot configuration to the robot control system.
+        """Sends robot configuration to the robot control system.
         
         Args:
             robot_config: RobotConfigState instance with configuration parameters

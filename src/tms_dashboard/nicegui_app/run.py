@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""NiceGUI web application main entry point - Versão simplificada"""
+"""NiceGUI web application main entry point - Simplified version"""
 
 import threading
 import time
