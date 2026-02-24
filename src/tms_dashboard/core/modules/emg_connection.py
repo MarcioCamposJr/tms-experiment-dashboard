@@ -122,7 +122,7 @@ class neuroOne:
                         self.__scale_factor = 0.05125
                     else:
                         # Tesla AC: ~10.25 nV/bit
-                        self.__scale_factor = 0.01025
+                        self.__scale_factor = 0.01025 * 2
                 else:
                     # NeuroOne: ~100 nV/bit
                     divider = 100.0 if is_dc else 1.0
