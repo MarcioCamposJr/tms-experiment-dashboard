@@ -116,13 +116,19 @@ class neuroOne:
                 type_byte = data[offset + found_idx]
                 is_dc = (type_byte & 0x07) == 1
                 is_tesla = ((type_byte >> 3) & 0x03) == 1
-                
-                divider = 1.0
-                if is_dc: divider = 100.0
-                elif is_tesla: divider = 20.0 # Tesla AC divider
+                if is_tesla:
+                    if is_dc:
+                        # Tesla DC: ~51 nV/bit
+                        self.__scale_factor = 0.05125
+                    else:
+                        # Tesla AC: ~10.25 nV/bit
+                        self.__scale_factor = 0.01025
+                else:
+                    # NeuroOne: ~100 nV/bit
+                    divider = 100.0 if is_dc else 1.0
+                    self.__scale_factor = 0.1 / divider
 
                 with self.__lock:
-                    self.__scale_factor = 0.1 / divider
                     self.__ch_index_in_bundle = found_idx
                     self.__buffer = deque(maxlen=self.__sampling_rate * 3000)
 
