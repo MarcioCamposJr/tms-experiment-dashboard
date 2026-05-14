@@ -3,7 +3,7 @@ name = "tms-experiment-dashboard"
 version = "0.2.0"
 description = "Dashboard para experimentos TMS com suporte dual framework (NiceGUI/Streamlit)"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 
 # Core dependencies (always installed)
 dependencies = [

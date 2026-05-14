@@ -6,6 +6,10 @@
 
 > Web-based graphical interface for visualization, control and documenting events during TMS experiments coupled with EMG using neuronavigation with InVesalius.
 
+## 📋 Requirements
+
+- **Python 3.11 – 3.12** (recommended: 3.11)
+
 ## 🚀 Quick Installation
 
 ### Option 1: With uv (Recommended)
