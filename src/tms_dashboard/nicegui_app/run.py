@@ -106,11 +106,14 @@ def index():
     ''')
     
     # Create per-session UI state
-    ui_state = DashboardUI(client_id=ui.context.client.id)
+    client = ui.context.client
+    ui_state = DashboardUI(client_id=client.id)
     client_manager.register(ui_state)
     
     # Register cleanup on disconnect
-    ui.context.client.on_disconnect(lambda: client_manager.unregister(ui_state))
+    client.on_disconnect(lambda: client_manager.unregister(ui_state))
+    client.on_connect(lambda: client_manager.register(ui_state))
+    client.on_delete(lambda: client_manager.unregister(ui_state))
 
     # Build UI using shared dashboard instance and per-session UI state
     create_header(dashboard, robot_config, message_emit)
@@ -118,12 +121,17 @@ def index():
 
     # Per-client UI update timer — runs on NiceGUI's event loop, not a background thread
     def update_client_ui():
+        if not client.has_socket_connection:
+            return
         try:
             update_dashboard.update_single(ui_state)
         except Exception:
             logger.exception('UI update failed: client=%s', ui_state.client_id)
 
-    ui.timer(0.1, update_client_ui)
+    update_timer = ui.timer(0.1, update_client_ui)
+    client.on_disconnect(update_timer.deactivate)
+    client.on_connect(update_timer.activate)
+    client.on_delete(lambda: update_timer.cancel(with_current_invocation=True))
 
 
 def main():
