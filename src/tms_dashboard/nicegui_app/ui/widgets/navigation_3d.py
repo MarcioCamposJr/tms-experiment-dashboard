@@ -19,6 +19,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
     """
 
     SCALE = 0.65
+    client = ui.context.client
 
     with ui.column().classes('w-full h-full').style('position: relative; overflow: hidden; display: flex; flex-direction: column; flex: 1;'):
         ui.label('Navigation').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; color: #4b5563;')
@@ -109,7 +110,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                                     }}, 500);
                                 ''')
                             except Exception:
-                                logger.exception('Surface rendering failed: client=%s', scene.client.id)
+                                logger.exception('Surface rendering failed: client=%s', client.id)
                             local_stl_objects[surface_index] = obj
 
                     # Timer to update object positions from dashboard state
@@ -117,6 +118,8 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                         nonlocal last_coil_pose, last_target_pose, last_target_visible
                         nonlocal last_distance, last_camera_state
 
+                        if not client.has_socket_connection:
+                            return
                         # Keep mesh requests and their response handling independent of pose caching.
                         refresh_surfaces()
                         coil_pose = tuple(dashboard.coil_location)
@@ -196,4 +199,7 @@ def create_3d_scene_with_models(dashboard: DashboardState, message_emit: Message
                         else:
                             last_camera_state = None
                     
-                    ui.timer(0.1, update_positions)  # Update at 10 Hz
+                    update_timer = ui.timer(0.1, update_positions)  # Update at 10 Hz
+                    client.on_disconnect(update_timer.deactivate)
+                    client.on_connect(update_timer.activate)
+                    client.on_delete(lambda: update_timer.cancel(with_current_invocation=True))
