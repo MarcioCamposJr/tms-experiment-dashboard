@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 """Update dashboard module - manages real-time UI updates."""
 
+import logging
+
 import numpy as np
 import plotly.graph_objects as go
 
 from tms_dashboard.nicegui_app.styles import change_color, change_radio_icon, change_label, get_status, change_button, change_icon, change_progress_ui, change_image
 from tms_dashboard.config import IMAGES_DIR
+
+logger = logging.getLogger(__name__)
 
 class UpdateDashboard:
     def __init__(self, dashboard, emg_connection, client_manager):
@@ -16,13 +20,27 @@ class UpdateDashboard:
 
     def update_single(self, ui_state):
         """Update a single client's UI. Called by per-client ui.timer on event loop."""
-        self.update_dashboard_colors(ui_state)
-        self.update_indicators(ui_state)
-        self.update_buttons(ui_state)
-        self.update_displacement_plot(ui_state)
-        self.update_rotation_plot(ui_state)
+        updates = [
+            self.update_dashboard_colors,
+            self.update_indicators,
+            self.update_buttons,
+            self.update_displacement_plot,
+            self.update_rotation_plot,
+        ]
         if self.dashboard.status_new_mep:
-            self.update_mep_plot(ui_state)
+            updates.append(self.update_mep_plot)
+        for update in updates:
+            section = update.__name__
+            try:
+                update(ui_state)
+            except Exception as error:
+                # Log a persistent failure once, without stopping the other panels.
+                signature = (type(error), str(error))
+                if ui_state.update_errors.get(section) != signature:
+                    logger.exception('UI update failed: client=%s section=%s', ui_state.client_id, section)
+                ui_state.update_errors[section] = signature
+            else:
+                ui_state.update_errors.pop(section, None)
 
     def update(self):
         """Update all clients (legacy — kept for compatibility)."""
@@ -90,13 +108,6 @@ class UpdateDashboard:
 
         dashboard = self.dashboard
         
-        # Convert deques to lists for plotting
-        time_data = list(dashboard.displacement_time_history)
-        time_trigger = list(dashboard.trigged_times)
-        x_data = list(dashboard.displacement_history_x)
-        y_data = list(dashboard.displacement_history_y)
-        z_data = list(dashboard.displacement_history_z)
-        
         if ui_state.displacement_plot is None:
             return
 
@@ -106,7 +117,11 @@ class UpdateDashboard:
             cache_key = '_cache_last_displacement_time'
             if getattr(ui_state, cache_key, None) == last_time:
                 return
-            setattr(ui_state, cache_key, last_time)
+
+        time_data = list(dashboard.displacement_time_history)
+        x_data = list(dashboard.displacement_history_x)
+        y_data = list(dashboard.displacement_history_y)
+        z_data = list(dashboard.displacement_history_z)
 
         # Update existing Plotly traces in-place
         ui_state.displacement_plot.figure.data[0].x = time_data
@@ -116,30 +131,17 @@ class UpdateDashboard:
         ui_state.displacement_plot.figure.data[2].x = time_data
         ui_state.displacement_plot.figure.data[2].y = z_data
 
-        ui_state.displacement_plot.figure.layout.shapes = []
-        for trigger in time_trigger:
-            if trigger in time_data:
-                ui_state.displacement_plot.figure.add_vline(
-                x=trigger,
-                line=dict(color="red", width=2, dash="dash"),
-                opacity=0.8
-            )
+        ui_state.displacement_plot.figure.layout.shapes = self._trigger_shapes(time_data)
         
         # Force auto-range to handle sliding window
         ui_state.displacement_plot.figure.layout.xaxis.autorange = True
         ui_state.displacement_plot.update()
+        ui_state._cache_last_displacement_time = time_data[-1] if time_data else None
     
     def update_rotation_plot(self, ui_state):
         """Update rotation plot with current history data (rx, ry, rz in degrees)."""
 
         dashboard = self.dashboard
-        
-        # Convert deques to lists for plotting
-        time_data = list(dashboard.rotation_time_history)
-        rx_data = list(dashboard.rotation_history_rx)
-        ry_data = list(dashboard.rotation_history_ry)
-        rz_data = list(dashboard.rotation_history_rz)
-        time_trigger = list(dashboard.trigged_times)
         
         if ui_state.rotation_plot is None:
             return
@@ -150,7 +152,11 @@ class UpdateDashboard:
             cache_key = '_cache_last_rotation_time'
             if getattr(ui_state, cache_key, None) == last_time:
                 return
-            setattr(ui_state, cache_key, last_time)
+
+        time_data = list(dashboard.rotation_time_history)
+        rx_data = list(dashboard.rotation_history_rx)
+        ry_data = list(dashboard.rotation_history_ry)
+        rz_data = list(dashboard.rotation_history_rz)
 
         # Update existing Plotly traces in-place
         ui_state.rotation_plot.figure.data[0].x = time_data
@@ -160,18 +166,25 @@ class UpdateDashboard:
         ui_state.rotation_plot.figure.data[2].x = time_data
         ui_state.rotation_plot.figure.data[2].y = rz_data
         
-        ui_state.displacement_plot.figure.layout.shapes = []
-        for trigger in time_trigger:
-            if trigger in time_data:
-                ui_state.displacement_plot.figure.add_vline(
-                x=trigger,
-                line=dict(color="red", width=2, dash="dash"),
-                opacity=0.8
-            )
+        ui_state.rotation_plot.figure.layout.shapes = self._trigger_shapes(time_data)
 
         # Force auto-range to handle sliding window
         ui_state.rotation_plot.figure.layout.xaxis.autorange = True
         ui_state.rotation_plot.update()
+        ui_state._cache_last_rotation_time = time_data[-1] if time_data else None
+
+    def _trigger_shapes(self, time_data):
+        """Build all stimulus markers together to avoid repeated Plotly validation."""
+        visible_times = set(time_data)
+        return [
+            dict(
+                type='line', x0=trigger, x1=trigger, xref='x',
+                y0=0, y1=1, yref='y domain',
+                line=dict(color='red', width=2, dash='dash'), opacity=0.8,
+            )
+            for trigger in list(self.dashboard.trigged_times)
+            if trigger in visible_times
+        ]
     
     def update_mep_plot(self, ui_state, num_windows=5):
         """Update MEP plot with current history data using Plotly."""
@@ -257,4 +270,4 @@ class UpdateDashboard:
         change_button(ui_state, "navigation_button", get_status(dashboard.navigation_button_pressed))
         change_button(ui_state, "upward_robot_button", get_status(dashboard.move_upward_robot_pressed), ("#5898d46c", "#ffffff00"))
         change_button(ui_state, "active_robot_button", get_status(dashboard.active_robot_pressed), ("#5898d46c", "#ffffff00"))  
-        change_button(ui_state, "free_drive_button", get_status(dashboard.free_drive_robot_pressed), ("#5898d46c", "#ffffff00")) 
+        change_button(ui_state, "free_drive_button", get_status(dashboard.free_drive_robot_pressed), ("#5898d46c", "#ffffff00"))

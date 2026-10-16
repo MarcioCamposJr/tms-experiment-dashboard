@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """NiceGUI web application main entry point - Simplified version"""
 
+import logging
 import threading
 import time
 from nicegui import ui, app
@@ -21,6 +22,8 @@ from tms_dashboard.nicegui_app.client_manager import ClientManager
 from tms_dashboard.nicegui_app.ui_state import DashboardUI
 
 from tms_dashboard.nicegui_app.ui import create_header, create_dashboard_tabs
+
+logger = logging.getLogger(__name__)
 
 # Global shared instances (persist across all sessions)
 client_manager = ClientManager()
@@ -103,7 +106,7 @@ def index():
     ''')
     
     # Create per-session UI state
-    ui_state = DashboardUI()
+    ui_state = DashboardUI(client_id=ui.context.client.id)
     client_manager.register(ui_state)
     
     # Register cleanup on disconnect
@@ -118,7 +121,7 @@ def index():
         try:
             update_dashboard.update_single(ui_state)
         except Exception:
-            pass
+            logger.exception('UI update failed: client=%s', ui_state.client_id)
 
     ui.timer(0.1, update_client_ui)
 
