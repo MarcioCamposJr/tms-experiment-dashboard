@@ -9,7 +9,7 @@ import time
 import numpy as np
 
 from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_indexes_fast_tol, p2p_from_time
-from tms_dashboard.core.plot_snapshots import TimeSeriesSnapshot
+from tms_dashboard.core.plot_snapshots import MepPlotSnapshot, TimeSeriesSnapshot
 
 
 @dataclass
@@ -100,6 +100,8 @@ class DashboardState:
         self.status_new_mep = False
         self.status_new_mep_2 = False
         self.new_meps_index = []
+        self._mep_plot_revision = getattr(self, '_mep_plot_revision', 0) + 1
+        self.mep_plot_snapshot = MepPlotSnapshot(self._mep_plot_revision)
         
         # Experiment metadata with default values
         self.experiment_name = 'Paired pulse, dual site, bilateral, leftM1-rightPMv'
@@ -201,10 +203,9 @@ class DashboardState:
         if np.array_equal(new_mep_history, self.mep_history):
             return
         
-        self.new_meps_index = new_indexes_fast_tol(self.mep_history, new_mep_history)
+        new_meps_index = new_indexes_fast_tol(self.mep_history, new_mep_history)
 
-        self.mep_history = new_mep_history
-        self.mep_history_baseline = set_apply_baseline_all(
+        mep_history_baseline = set_apply_baseline_all(
                                 baseline_start_ms=5,      # Baseline start at 5ms
                                 baseline_end_ms=20,        # Baseline end at 20ms
                                 signal_start_ms= t_min,  # Signal starts at -10ms
@@ -212,8 +213,29 @@ class DashboardState:
                                 data_windows=new_mep_history, 
                                 sampling_rate=sampling_rate
                             )
-        self.mep_p2p_history_baseline = [p2p_from_time(mep, self.mep_sampling_rate, t_min) for mep in self.mep_history_baseline]
-        self.status_new_mep = self.status_new_mep_2 = True
+        mep_p2p_history_baseline = [p2p_from_time(mep, self.mep_sampling_rate, t_min) for mep in mep_history_baseline]
+        # Publish a complete result atomically. Signal calculations and send flags
+        # keep their existing behavior; display revisions are tracked separately.
+        with self._plot_lock:
+            self.new_meps_index = new_meps_index
+            self.mep_history = new_mep_history
+            self.mep_history_baseline = mep_history_baseline
+            self.mep_p2p_history_baseline = mep_p2p_history_baseline
+            self._mep_plot_revision += 1
+            self.mep_plot_snapshot = MepPlotSnapshot(
+                revision=self._mep_plot_revision,
+                windows=tuple(mep_history_baseline),
+                peak_to_peak=tuple(mep_p2p_history_baseline),
+                t_min=t_min,
+                t_max=t_max,
+            )
+            self.status_new_mep = self.status_new_mep_2 = True
+
+    def acknowledge_mep_display(self, snapshot: MepPlotSnapshot):
+        """Keep the existing display acknowledgement, without consuming a newer MEP."""
+        with self._plot_lock:
+            if self.mep_plot_snapshot is snapshot:
+                self.status_new_mep = False
     
     def get_all_state_mep(self):
         if self.mep_history == [] and self.mep_history_baseline == [] and self.mep_sampling_rate == None and self.status_new_mep == False and self.new_meps_index == []:
@@ -222,8 +244,11 @@ class DashboardState:
             return True
         
     def reset_all_state_mep(self):
-        self.mep_history = []
-        self.mep_history_baseline = []
-        self.mep_sampling_rate = None
-        self.status_new_mep = False
-        self.new_meps_index = []
+        with self._plot_lock:
+            self.mep_history = []
+            self.mep_history_baseline = []
+            self.mep_sampling_rate = None
+            self.status_new_mep = False
+            self.new_meps_index = []
+            self._mep_plot_revision += 1
+            self.mep_plot_snapshot = MepPlotSnapshot(self._mep_plot_revision)

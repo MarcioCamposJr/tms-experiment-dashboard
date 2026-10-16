@@ -19,6 +19,8 @@ class UpdateDashboard:
         self.client_manager = client_manager
         self._time_series_snapshot = None
         self._time_series_data = {}
+        self._mep_cache_key = None
+        self._mep_traces = []
 
     def update_single(self, ui_state):
         """Update a single client's UI. Called by per-client ui.timer on event loop."""
@@ -28,9 +30,8 @@ class UpdateDashboard:
             self.update_buttons,
             self.update_displacement_plot,
             self.update_rotation_plot,
+            self.update_mep_plot,
         ]
-        if self.dashboard.status_new_mep:
-            updates.append(self.update_mep_plot)
         for update in updates:
             section = update.__name__
             try:
@@ -154,22 +155,37 @@ class UpdateDashboard:
         ]
     
     def update_mep_plot(self, ui_state, num_windows=5):
-        """Update MEP plot with current history data using Plotly."""
-        
-        dashboard = self.dashboard
+        """Display each complete MEP revision once for every connected client."""
         if ui_state.mep_plot is None:
             return
-            
-        # Fetch data
-        t_min_ms = self.emg_connection.t_min * 1000
-        t_max_ms = self.emg_connection.t_max * 1000
-        
-        # No action when no data available
-        if not dashboard.mep_history_baseline:
+        snapshot = self.dashboard.mep_plot_snapshot
+        if ui_state.last_mep_revision == snapshot.revision:
             return
-            
-        mep_history = list(dashboard.mep_history_baseline)[-num_windows:]
-        mep_p2p_history = list(dashboard.mep_p2p_history_baseline)[-num_windows:]
+
+        cache_key = (snapshot.revision, num_windows)
+        if self._mep_cache_key != cache_key:
+            self._mep_traces = self._build_mep_traces(snapshot, num_windows)
+            self._mep_cache_key = cache_key
+
+        ui_state.mep_plot.figure = go.Figure(
+            data=self._mep_traces, layout=ui_state.mep_plot.figure.layout,
+        )
+        ui_state.mep_plot.update()
+        ui_state.last_mep_revision = snapshot.revision
+        if snapshot.windows:
+            # Preserve the existing flag acknowledgement used by the send loop.
+            # Other clients use their own display revision instead of this flag.
+            self.dashboard.acknowledge_mep_display(snapshot)
+
+    @staticmethod
+    def _build_mep_traces(snapshot, num_windows):
+        """Prepare MEP traces once per result, sharing them across clients."""
+        if not snapshot.windows:
+            return []
+        t_min_ms = snapshot.t_min * 1000
+        t_max_ms = snapshot.t_max * 1000
+        mep_history = snapshot.windows[-num_windows:]
+        mep_p2p_history = snapshot.peak_to_peak[-num_windows:]
 
         # X Axis
         t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
@@ -221,15 +237,7 @@ class UpdateDashboard:
                     hoverinfo='skip'
                 ))
             
-        # Updates figure
-        # Updating whole chart to avoid Plotly's validation errors
-        # "The data property of a figure may only be assigned..."
-        # Keeping original layout
-        ui_state.mep_plot.figure = go.Figure(data=traces, layout=ui_state.mep_plot.figure.layout)
-        # Forces update
-        ui_state.mep_plot.update()
-
-        self.dashboard.status_new_mep = False
+        return traces
 
     def update_buttons(self, ui_state):
         dashboard = self.dashboard
