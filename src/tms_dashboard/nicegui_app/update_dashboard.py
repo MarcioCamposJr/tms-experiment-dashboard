@@ -17,6 +17,8 @@ class UpdateDashboard:
         self.dashboard = dashboard
         self.emg_connection = emg_connection
         self.client_manager = client_manager
+        self._time_series_snapshot = None
+        self._time_series_data = {}
 
     def update_single(self, ui_state):
         """Update a single client's UI. Called by per-client ui.timer on event loop."""
@@ -100,80 +102,45 @@ class UpdateDashboard:
         change_progress_ui(ui_state, "force_indicator", round(dashboard.force, 2))
 
     def update_displacement_plot(self, ui_state):
-        """Update displacement plot with current history data.
-        
-        Args:
-            ui_state: DashboardUI instance
-        """
+        """Apply the latest shared displacement snapshot to this client's plot."""
+        self._update_time_series_plot(ui_state, 'displacement')
 
-        dashboard = self.dashboard
-        
-        if ui_state.displacement_plot is None:
-            return
-
-        # Skip if no new data since last update
-        if dashboard.displacement_time_history:
-            last_time = dashboard.displacement_time_history[-1]
-            cache_key = '_cache_last_displacement_time'
-            if getattr(ui_state, cache_key, None) == last_time:
-                return
-
-        time_data = list(dashboard.displacement_time_history)
-        x_data = list(dashboard.displacement_history_x)
-        y_data = list(dashboard.displacement_history_y)
-        z_data = list(dashboard.displacement_history_z)
-
-        # Update existing Plotly traces in-place
-        ui_state.displacement_plot.figure.data[0].x = time_data
-        ui_state.displacement_plot.figure.data[0].y = x_data
-        ui_state.displacement_plot.figure.data[1].x = time_data
-        ui_state.displacement_plot.figure.data[1].y = y_data
-        ui_state.displacement_plot.figure.data[2].x = time_data
-        ui_state.displacement_plot.figure.data[2].y = z_data
-
-        ui_state.displacement_plot.figure.layout.shapes = self._trigger_shapes(time_data)
-        
-        # Force auto-range to handle sliding window
-        ui_state.displacement_plot.figure.layout.xaxis.autorange = True
-        ui_state.displacement_plot.update()
-        ui_state._cache_last_displacement_time = time_data[-1] if time_data else None
-    
     def update_rotation_plot(self, ui_state):
-        """Update rotation plot with current history data (rx, ry, rz in degrees)."""
+        """Apply the latest shared rotation snapshot to this client's plot."""
+        self._update_time_series_plot(ui_state, 'rotation')
 
-        dashboard = self.dashboard
-        
-        if ui_state.rotation_plot is None:
+    def _update_time_series_plot(self, ui_state, kind):
+        plot = getattr(ui_state, f'{kind}_plot')
+        if plot is None:
+            return
+        snapshot = self.dashboard.get_time_series_snapshot()
+        revision_key = f'last_{kind}_revision'
+        if getattr(ui_state, revision_key) == snapshot.revision:
             return
 
-        # Skip if no new data since last update
-        if dashboard.rotation_time_history:
-            last_time = dashboard.rotation_time_history[-1]
-            cache_key = '_cache_last_rotation_time'
-            if getattr(ui_state, cache_key, None) == last_time:
-                return
+        if self._time_series_snapshot is not snapshot:
+            self._time_series_data = {
+                name: (
+                    getattr(snapshot, f'{name}_time'),
+                    getattr(snapshot, name),
+                    self._trigger_shapes(getattr(snapshot, f'{name}_time'), snapshot.trigger_times),
+                )
+                for name in ('displacement', 'rotation')
+            }
+            self._time_series_snapshot = snapshot
 
-        time_data = list(dashboard.rotation_time_history)
-        rx_data = list(dashboard.rotation_history_rx)
-        ry_data = list(dashboard.rotation_history_ry)
-        rz_data = list(dashboard.rotation_history_rz)
+        time_data, series, shapes = self._time_series_data[kind]
+        for trace, values in zip(plot.figure.data, series):
+            trace.x = time_data
+            trace.y = values
+        plot.figure.layout.shapes = shapes
+        plot.figure.layout.xaxis.autorange = True
+        plot.update()
+        # A failed send must leave this revision pending for a later retry.
+        setattr(ui_state, revision_key, snapshot.revision)
 
-        # Update existing Plotly traces in-place
-        ui_state.rotation_plot.figure.data[0].x = time_data
-        ui_state.rotation_plot.figure.data[0].y = rx_data
-        ui_state.rotation_plot.figure.data[1].x = time_data
-        ui_state.rotation_plot.figure.data[1].y = ry_data
-        ui_state.rotation_plot.figure.data[2].x = time_data
-        ui_state.rotation_plot.figure.data[2].y = rz_data
-        
-        ui_state.rotation_plot.figure.layout.shapes = self._trigger_shapes(time_data)
-
-        # Force auto-range to handle sliding window
-        ui_state.rotation_plot.figure.layout.xaxis.autorange = True
-        ui_state.rotation_plot.update()
-        ui_state._cache_last_rotation_time = time_data[-1] if time_data else None
-
-    def _trigger_shapes(self, time_data):
+    @staticmethod
+    def _trigger_shapes(time_data, trigger_times):
         """Build all stimulus markers together to avoid repeated Plotly validation."""
         visible_times = set(time_data)
         return [
@@ -182,7 +149,7 @@ class UpdateDashboard:
                 y0=0, y1=1, yref='y domain',
                 line=dict(color='red', width=2, dash='dash'), opacity=0.8,
             )
-            for trigger in list(self.dashboard.trigged_times)
+            for trigger in trigger_times
             if trigger in visible_times
         ]
     

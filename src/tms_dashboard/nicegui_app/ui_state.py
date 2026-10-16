@@ -61,6 +61,8 @@ class DashboardUI:
         self.displacement_plot = None
         self.rotation_plot = None
         self.mep_plot = None
+        self.last_displacement_revision = None
+        self.last_rotation_revision = None
         
         # Navigation Buttons
         self.navigation_button = None
