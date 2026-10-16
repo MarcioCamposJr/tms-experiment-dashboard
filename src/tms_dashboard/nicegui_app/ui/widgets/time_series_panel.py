@@ -5,6 +5,7 @@
 from nicegui import ui
 import plotly.graph_objects as go
 from tms_dashboard.core.dashboard_state import DashboardState
+from tms_dashboard.config import MEP_WINDOW_START_MS, MEP_WINDOW_END_MS
 from tms_dashboard.nicegui_app.ui_state import DashboardUI
 
 def create_mep_panel(ui_state: DashboardUI):
@@ -43,7 +44,7 @@ def create_mep_panel(ui_state: DashboardUI):
                     gridcolor='#d1d5db', 
                     zeroline=True,
                     zerolinecolor='#9ca3af',
-                    range=[-5, 40] 
+                    range=[MEP_WINDOW_START_MS, MEP_WINDOW_END_MS]
                 ),
                 yaxis=dict(
                     title='Amplitude (µV)', 

@@ -2,27 +2,48 @@
 # -*- coding: utf-8 -*-
 """Update dashboard module - manages real-time UI updates."""
 
+import logging
+
 import numpy as np
 import plotly.graph_objects as go
 
 from tms_dashboard.nicegui_app.styles import change_color, change_radio_icon, change_label, get_status, change_button, change_icon, change_progress_ui, change_image
 from tms_dashboard.config import IMAGES_DIR
 
+logger = logging.getLogger(__name__)
+
 class UpdateDashboard:
     def __init__(self, dashboard, emg_connection, client_manager):
         self.dashboard = dashboard
         self.emg_connection = emg_connection
         self.client_manager = client_manager
+        self._time_series_snapshot = None
+        self._time_series_data = {}
+        self._mep_cache_key = None
+        self._mep_traces = []
 
     def update_single(self, ui_state):
         """Update a single client's UI. Called by per-client ui.timer on event loop."""
-        self.update_dashboard_colors(ui_state)
-        self.update_indicators(ui_state)
-        self.update_buttons(ui_state)
-        self.update_displacement_plot(ui_state)
-        self.update_rotation_plot(ui_state)
-        if self.dashboard.status_new_mep:
-            self.update_mep_plot(ui_state)
+        updates = [
+            self.update_dashboard_colors,
+            self.update_indicators,
+            self.update_buttons,
+            self.update_displacement_plot,
+            self.update_rotation_plot,
+            self.update_mep_plot,
+        ]
+        for update in updates:
+            section = update.__name__
+            try:
+                update(ui_state)
+            except Exception as error:
+                # Log a persistent failure once, without stopping the other panels.
+                signature = (type(error), str(error))
+                if ui_state.update_errors.get(section) != signature:
+                    logger.exception('UI update failed: client=%s section=%s', ui_state.client_id, section)
+                ui_state.update_errors[section] = signature
+            else:
+                ui_state.update_errors.pop(section, None)
 
     def update(self):
         """Update all clients (legacy — kept for compatibility)."""
@@ -82,117 +103,93 @@ class UpdateDashboard:
         change_progress_ui(ui_state, "force_indicator", round(dashboard.force, 2))
 
     def update_displacement_plot(self, ui_state):
-        """Update displacement plot with current history data.
-        
-        Args:
-            ui_state: DashboardUI instance
-        """
+        """Apply the latest shared displacement snapshot to this client's plot."""
+        self._update_time_series_plot(ui_state, 'displacement')
 
-        dashboard = self.dashboard
-        
-        # Convert deques to lists for plotting
-        time_data = list(dashboard.displacement_time_history)
-        time_trigger = list(dashboard.trigged_times)
-        x_data = list(dashboard.displacement_history_x)
-        y_data = list(dashboard.displacement_history_y)
-        z_data = list(dashboard.displacement_history_z)
-        
-        if ui_state.displacement_plot is None:
-            return
-
-        # Skip if no new data since last update
-        if dashboard.displacement_time_history:
-            last_time = dashboard.displacement_time_history[-1]
-            cache_key = '_cache_last_displacement_time'
-            if getattr(ui_state, cache_key, None) == last_time:
-                return
-            setattr(ui_state, cache_key, last_time)
-
-        # Update existing Plotly traces in-place
-        ui_state.displacement_plot.figure.data[0].x = time_data
-        ui_state.displacement_plot.figure.data[0].y = x_data
-        ui_state.displacement_plot.figure.data[1].x = time_data
-        ui_state.displacement_plot.figure.data[1].y = y_data
-        ui_state.displacement_plot.figure.data[2].x = time_data
-        ui_state.displacement_plot.figure.data[2].y = z_data
-
-        ui_state.displacement_plot.figure.layout.shapes = []
-        for trigger in time_trigger:
-            if trigger in time_data:
-                ui_state.displacement_plot.figure.add_vline(
-                x=trigger,
-                line=dict(color="red", width=2, dash="dash"),
-                opacity=0.8
-            )
-        
-        # Force auto-range to handle sliding window
-        ui_state.displacement_plot.figure.layout.xaxis.autorange = True
-        ui_state.displacement_plot.update()
-    
     def update_rotation_plot(self, ui_state):
-        """Update rotation plot with current history data (rx, ry, rz in degrees)."""
+        """Apply the latest shared rotation snapshot to this client's plot."""
+        self._update_time_series_plot(ui_state, 'rotation')
 
-        dashboard = self.dashboard
-        
-        # Convert deques to lists for plotting
-        time_data = list(dashboard.rotation_time_history)
-        rx_data = list(dashboard.rotation_history_rx)
-        ry_data = list(dashboard.rotation_history_ry)
-        rz_data = list(dashboard.rotation_history_rz)
-        time_trigger = list(dashboard.trigged_times)
-        
-        if ui_state.rotation_plot is None:
+    def _update_time_series_plot(self, ui_state, kind):
+        plot = getattr(ui_state, f'{kind}_plot')
+        if plot is None:
+            return
+        snapshot = self.dashboard.get_time_series_snapshot()
+        revision_key = f'last_{kind}_revision'
+        if getattr(ui_state, revision_key) == snapshot.revision:
             return
 
-        # Skip if no new data since last update
-        if dashboard.rotation_time_history:
-            last_time = dashboard.rotation_time_history[-1]
-            cache_key = '_cache_last_rotation_time'
-            if getattr(ui_state, cache_key, None) == last_time:
-                return
-            setattr(ui_state, cache_key, last_time)
+        if self._time_series_snapshot is not snapshot:
+            self._time_series_data = {
+                name: (
+                    getattr(snapshot, f'{name}_time'),
+                    getattr(snapshot, name),
+                    self._trigger_shapes(getattr(snapshot, f'{name}_time'), snapshot.trigger_times),
+                )
+                for name in ('displacement', 'rotation')
+            }
+            self._time_series_snapshot = snapshot
 
-        # Update existing Plotly traces in-place
-        ui_state.rotation_plot.figure.data[0].x = time_data
-        ui_state.rotation_plot.figure.data[0].y = rx_data
-        ui_state.rotation_plot.figure.data[1].x = time_data
-        ui_state.rotation_plot.figure.data[1].y = ry_data
-        ui_state.rotation_plot.figure.data[2].x = time_data
-        ui_state.rotation_plot.figure.data[2].y = rz_data
-        
-        ui_state.displacement_plot.figure.layout.shapes = []
-        for trigger in time_trigger:
-            if trigger in time_data:
-                ui_state.displacement_plot.figure.add_vline(
-                x=trigger,
-                line=dict(color="red", width=2, dash="dash"),
-                opacity=0.8
+        time_data, series, shapes = self._time_series_data[kind]
+        for trace, values in zip(plot.figure.data, series):
+            trace.x = time_data
+            trace.y = values
+        plot.figure.layout.shapes = shapes
+        plot.figure.layout.xaxis.autorange = True
+        plot.update()
+        # A failed send must leave this revision pending for a later retry.
+        setattr(ui_state, revision_key, snapshot.revision)
+
+    @staticmethod
+    def _trigger_shapes(time_data, trigger_times):
+        """Build all stimulus markers together to avoid repeated Plotly validation."""
+        visible_times = set(time_data)
+        return [
+            dict(
+                type='line', x0=trigger, x1=trigger, xref='x',
+                y0=0, y1=1, yref='y domain',
+                line=dict(color='red', width=2, dash='dash'), opacity=0.8,
             )
-
-        # Force auto-range to handle sliding window
-        ui_state.rotation_plot.figure.layout.xaxis.autorange = True
-        ui_state.rotation_plot.update()
+            for trigger in trigger_times
+            if trigger in visible_times
+        ]
     
     def update_mep_plot(self, ui_state, num_windows=5):
-        """Update MEP plot with current history data using Plotly."""
-        
-        dashboard = self.dashboard
+        """Display each complete MEP revision once for every connected client."""
         if ui_state.mep_plot is None:
             return
-            
-        # Fetch data
-        t_min_ms = self.emg_connection.t_min * 1000
-        t_max_ms = self.emg_connection.t_max * 1000
-        
-        # No action when no data available
-        if not dashboard.mep_history_baseline:
+        snapshot = self.dashboard.mep_plot_snapshot
+        if ui_state.last_mep_revision == snapshot.revision:
             return
-            
-        mep_history = list(dashboard.mep_history_baseline)[-num_windows:]
-        mep_p2p_history = list(dashboard.mep_p2p_history_baseline)[-num_windows:]
+
+        cache_key = (snapshot.revision, num_windows)
+        if self._mep_cache_key != cache_key:
+            self._mep_traces = self._build_mep_traces(snapshot, num_windows)
+            self._mep_cache_key = cache_key
+
+        ui_state.mep_plot.figure = go.Figure(
+            data=self._mep_traces, layout=ui_state.mep_plot.figure.layout,
+        )
+        ui_state.mep_plot.update()
+        ui_state.last_mep_revision = snapshot.revision
+        if snapshot.windows:
+            # Preserve the existing flag acknowledgement used by the send loop.
+            # Other clients use their own display revision instead of this flag.
+            self.dashboard.acknowledge_mep_display(snapshot)
+
+    @staticmethod
+    def _build_mep_traces(snapshot, num_windows):
+        """Prepare MEP traces once per result, sharing them across clients."""
+        if not snapshot.windows:
+            return []
+        t_min_ms = snapshot.t_min * 1000
+        t_max_ms = snapshot.t_max * 1000
+        mep_history = snapshot.windows[-num_windows:]
+        mep_p2p_history = snapshot.peak_to_peak[-num_windows:]
 
         # X Axis
-        t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
+        # Acquisition windows exclude the final sample at t_max.
+        t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]), endpoint=False)
         
         traces = []
         
@@ -241,15 +238,7 @@ class UpdateDashboard:
                     hoverinfo='skip'
                 ))
             
-        # Updates figure
-        # Updating whole chart to avoid Plotly's validation errors
-        # "The data property of a figure may only be assigned..."
-        # Keeping original layout
-        ui_state.mep_plot.figure = go.Figure(data=traces, layout=ui_state.mep_plot.figure.layout)
-        # Forces update
-        ui_state.mep_plot.update()
-
-        self.dashboard.status_new_mep = False
+        return traces
 
     def update_buttons(self, ui_state):
         dashboard = self.dashboard
@@ -257,4 +246,4 @@ class UpdateDashboard:
         change_button(ui_state, "navigation_button", get_status(dashboard.navigation_button_pressed))
         change_button(ui_state, "upward_robot_button", get_status(dashboard.move_upward_robot_pressed), ("#5898d46c", "#ffffff00"))
         change_button(ui_state, "active_robot_button", get_status(dashboard.active_robot_pressed), ("#5898d46c", "#ffffff00"))  
-        change_button(ui_state, "free_drive_button", get_status(dashboard.free_drive_robot_pressed), ("#5898d46c", "#ffffff00")) 
+        change_button(ui_state, "free_drive_button", get_status(dashboard.free_drive_robot_pressed), ("#5898d46c", "#ffffff00"))

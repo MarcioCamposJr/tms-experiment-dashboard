@@ -4,10 +4,13 @@
 
 from dataclasses import dataclass
 from collections import deque
+from threading import Lock
 import time
 import numpy as np
 
 from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_indexes_fast_tol, p2p_from_time
+from tms_dashboard.core.plot_snapshots import MepPlotSnapshot, TimeSeriesSnapshot
+from tms_dashboard.config import MEP_BASELINE_START_MS, MEP_BASELINE_END_MS
 
 
 @dataclass
@@ -22,11 +25,13 @@ class DashboardState:
     """
     
     def __init__(self):
+        self._plot_lock = Lock()
         self.__set_init_state()
     
     def __set_init_state(self):
         # Navigation button status
         self.navigation_button_pressed = False
+        self.navigation_status_received = False
         self.free_drive_robot_pressed = False
         self.move_upward_robot_pressed = False
         self.active_robot_pressed = False
@@ -85,6 +90,8 @@ class DashboardState:
         self.rotation_time_history = deque(maxlen=self.max_history_length)
 
         self.trigged_times = deque(maxlen=self.max_history_length)
+        self._plot_revision = getattr(self, '_plot_revision', 0) + 1
+        self._time_series_snapshot = None
 
         # Motor evoked potentials plots and history
         # UI-specific plots are now in DashboardUI (per client)
@@ -95,6 +102,8 @@ class DashboardState:
         self.status_new_mep = False
         self.status_new_mep_2 = False
         self.new_meps_index = []
+        self._mep_plot_revision = getattr(self, '_mep_plot_revision', 0) + 1
+        self.mep_plot_snapshot = MepPlotSnapshot(self._mep_plot_revision)
         
         # Experiment metadata with default values
         self.experiment_name = 'Paired pulse, dual site, bilateral, leftM1-rightPMv'
@@ -140,7 +149,8 @@ class DashboardState:
         self.wait_for_stl = False
 
     def reset_state(self):
-        self.__set_init_state()
+        with self._plot_lock:
+            self.__set_init_state()
         print("Dashboard reseted")
     
     def add_displacement_sample(self):
@@ -149,44 +159,92 @@ class DashboardState:
         This method is called whenever new displacement data is received.
         It automatically maintains a rolling window of the last max_history_length samples.
         """
-        # Calculate elapsed time in seconds
-        elapsed_time = time.time() - self._start_time
-        
-        # Add current displacement values (x, y, z)
-        self.displacement_history_x.append(float(self.displacement[0]))
-        self.displacement_history_y.append(float(self.displacement[1]))
-        self.displacement_history_z.append(float(self.displacement[2]))
-        self.displacement_time_history.append(elapsed_time)
-        
-        # Add current rotation values (rx, ry, rz - indices 3, 4, 5)
-        self.rotation_history_rx.append(float(self.displacement[3]))
-        self.rotation_history_ry.append(float(self.displacement[4]))
-        self.rotation_history_rz.append(float(self.displacement[5]))
-        self.rotation_time_history.append(elapsed_time)
-        
-        if self.status_new_mep_2:
-            self.trigged_times.append(elapsed_time)
-            self.status_new_mep_2 = False
+        with self._plot_lock:
+            elapsed_time = time.time() - self._start_time
+
+            self.displacement_history_x.append(float(self.displacement[0]))
+            self.displacement_history_y.append(float(self.displacement[1]))
+            self.displacement_history_z.append(float(self.displacement[2]))
+            self.displacement_time_history.append(elapsed_time)
+
+            self.rotation_history_rx.append(float(self.displacement[3]))
+            self.rotation_history_ry.append(float(self.displacement[4]))
+            self.rotation_history_rz.append(float(self.displacement[5]))
+            self.rotation_time_history.append(elapsed_time)
+
+            if self.status_new_mep_2:
+                self.trigged_times.append(elapsed_time)
+                self.status_new_mep_2 = False
+
+            self._plot_revision += 1
+            self._time_series_snapshot = None
+
+    def get_time_series_snapshot(self) -> TimeSeriesSnapshot:
+        """Copy a complete sample history once, then share it across UI clients."""
+        with self._plot_lock:
+            if self._time_series_snapshot is None:
+                self._time_series_snapshot = TimeSeriesSnapshot(
+                    revision=self._plot_revision,
+                    displacement_time=tuple(self.displacement_time_history),
+                    displacement=tuple(tuple(history) for history in (
+                        self.displacement_history_x, self.displacement_history_y,
+                        self.displacement_history_z,
+                    )),
+                    rotation_time=tuple(self.rotation_time_history),
+                    rotation=tuple(tuple(history) for history in (
+                        self.rotation_history_rx, self.rotation_history_ry,
+                        self.rotation_history_rz,
+                    )),
+                    trigger_times=tuple(self.trigged_times),
+                )
+            return self._time_series_snapshot
 
     def update_mep_history(self, new_mep_history, t_min, t_max, sampling_rate):
+        """Correct MEPs using the pre-pulse baseline; t_min/t_max are in seconds."""
         if len(new_mep_history) == 0:
             return
         if np.array_equal(new_mep_history, self.mep_history):
             return
         
-        self.new_meps_index = new_indexes_fast_tol(self.mep_history, new_mep_history)
+        new_meps_index = new_indexes_fast_tol(self.mep_history, new_mep_history)
 
-        self.mep_history = new_mep_history
-        self.mep_history_baseline = set_apply_baseline_all(
-                                baseline_start_ms=5,      # Baseline start at 5ms
-                                baseline_end_ms=20,        # Baseline end at 20ms
-                                signal_start_ms= t_min,  # Signal starts at -10ms
-                                signal_end_ms= t_max,    # Signal ends at 40ms
-                                data_windows=new_mep_history, 
-                                sampling_rate=sampling_rate
-                            )
-        self.mep_p2p_history_baseline = [p2p_from_time(mep, self.mep_sampling_rate, t_min) for mep in self.mep_history_baseline]
-        self.status_new_mep = self.status_new_mep_2 = True
+        signal_start_ms = t_min * 1000
+        signal_end_ms = t_max * 1000
+        mep_history_baseline = set_apply_baseline_all(
+            baseline_start_ms=MEP_BASELINE_START_MS,
+            baseline_end_ms=MEP_BASELINE_END_MS,
+            signal_start_ms=signal_start_ms,
+            signal_end_ms=signal_end_ms,
+            data_windows=new_mep_history,
+            sampling_rate=sampling_rate,
+        )
+        mep_p2p_history_baseline = [
+            p2p_from_time(mep, sampling_rate, signal_start_ms)
+            for mep in mep_history_baseline
+        ]
+        # Publish a complete result atomically; display revisions are tracked
+        # separately from the existing communication flags.
+        with self._plot_lock:
+            self.new_meps_index = new_meps_index
+            self.mep_history = new_mep_history
+            self.mep_history_baseline = mep_history_baseline
+            self.mep_p2p_history_baseline = mep_p2p_history_baseline
+            self.mep_sampling_rate = sampling_rate
+            self._mep_plot_revision += 1
+            self.mep_plot_snapshot = MepPlotSnapshot(
+                revision=self._mep_plot_revision,
+                windows=tuple(mep_history_baseline),
+                peak_to_peak=tuple(mep_p2p_history_baseline),
+                t_min=t_min,
+                t_max=t_max,
+            )
+            self.status_new_mep = self.status_new_mep_2 = True
+
+    def acknowledge_mep_display(self, snapshot: MepPlotSnapshot):
+        """Keep the existing display acknowledgement, without consuming a newer MEP."""
+        with self._plot_lock:
+            if self.mep_plot_snapshot is snapshot:
+                self.status_new_mep = False
     
     def get_all_state_mep(self):
         if self.mep_history == [] and self.mep_history_baseline == [] and self.mep_sampling_rate == None and self.status_new_mep == False and self.new_meps_index == []:
@@ -195,8 +253,11 @@ class DashboardState:
             return True
         
     def reset_all_state_mep(self):
-        self.mep_history = []
-        self.mep_history_baseline = []
-        self.mep_sampling_rate = None
-        self.status_new_mep = False
-        self.new_meps_index = []
+        with self._plot_lock:
+            self.mep_history = []
+            self.mep_history_baseline = []
+            self.mep_sampling_rate = None
+            self.status_new_mep = False
+            self.new_meps_index = []
+            self._mep_plot_revision += 1
+            self.mep_plot_snapshot = MepPlotSnapshot(self._mep_plot_revision)

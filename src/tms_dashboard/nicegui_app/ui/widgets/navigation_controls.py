@@ -23,7 +23,7 @@ def create_navigation_controls(message_emit, ui_state: DashboardUI):
         ui.label('Navigation Controls').style('font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; color: #374151;')
         
         # Main control button - Start/Stop (highlighted)
-        nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow').props('color=positive size=lg').classes('w-full').style(
+        nav_button = ui.button('NAVIGATION STATUS', icon='play_arrow', on_click=message_emit.toggle_navigation).props('color=positive size=lg').classes('w-full').style(
             'font-size: 1rem; '
             'font-weight: 600; '
             'padding: 16px; '

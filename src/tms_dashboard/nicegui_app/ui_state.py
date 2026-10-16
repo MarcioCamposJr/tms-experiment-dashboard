@@ -10,7 +10,10 @@ class DashboardUI:
     client's UI elements are stored.
     """
     
-    def __init__(self):
+    def __init__(self, client_id: str | None = None):
+        self.client_id = client_id
+        self.update_errors = {}
+
         # Connection icons/labels
         self.icon_project = None
         self.label_project = None
@@ -58,6 +61,9 @@ class DashboardUI:
         self.displacement_plot = None
         self.rotation_plot = None
         self.mep_plot = None
+        self.last_displacement_revision = None
+        self.last_rotation_revision = None
+        self.last_mep_revision = None
         
         # Navigation Buttons
         self.navigation_button = None
