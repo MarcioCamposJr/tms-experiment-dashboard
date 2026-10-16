@@ -17,6 +17,13 @@ class Message2Server():
         success = self.__socket_client.emit_event('from_neuronavigation', payload)
         return success
 
+    def toggle_navigation(self):
+        """Request a toggle; the received navigation status confirms the change."""
+        return self.__send_message2navigation(
+            topic="Press start navigation button",
+            data={'pressed': not self.dashboard.navigation_button_pressed},
+        )
+
     def create_marker(self):
         return self.__send_message2navigation(topic='Create marker')
     

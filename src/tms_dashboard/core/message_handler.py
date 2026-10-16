@@ -117,7 +117,10 @@ class MessageHandler:
                 case 'Neuronavigation to Robot: Update displacement to target':
                     self._handle_displacement(data)
 
-                    self.dashboard.navigation_button_pressed = True
+                    # Infer an already-running session on dashboard startup only.
+                    # Buffered telemetry must not override an explicit stop/status.
+                    if not self.dashboard.navigation_status_received:
+                        self.dashboard.navigation_button_pressed = True
                     self.dashboard.target_set = True
                     self.dashboard.image_fiducials = True
                     self.dashboard.tracker_fiducials = True
@@ -160,17 +163,25 @@ class MessageHandler:
 
                 case "Press navigation button":
                     self.dashboard.navigation_button_pressed = data["cond"]
+                    self.dashboard.navigation_status_received = True
                 
                 case "Robot to Neuronavigation: Send force sensor data":
                     self.dashboard.force = data["force_feedback"]
                     if not self.dashboard.robot_set:
                         self.message_emit.check_robot_connection()
         
-                case "Start navigation":
-                    self.dashboard.navigation_button_pressed = True
+                case "Navigation status":
+                    self.dashboard.navigation_button_pressed = data["nav_status"]
+                    self.dashboard.navigation_status_received = True
 
                 case "Stop navigation":
                     self.dashboard.navigation_button_pressed = False
+                    self.dashboard.navigation_status_received = True
+
+                case "Start navigation" | "Press start navigation button":
+                    # These are requests, including relay echoes of our own clicks.
+                    # InVesalius may reject a start; wait for Navigation status.
+                    pass
 
                 case "Neuronavigation to Robot: Set free drive":
                     pressed = data["set"]
