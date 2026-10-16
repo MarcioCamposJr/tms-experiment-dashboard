@@ -9,6 +9,7 @@ from nicegui import ui, app
 import traceback
 
 from tms_dashboard.config import DEFAULT_HOST, DEFAULT_PORT, NICEGUI_PORT, STATIC_DIR
+from tms_dashboard.config import MEP_WINDOW_START_MS, MEP_WINDOW_END_MS
 from tms_dashboard.constants import TriggerType
 
 from tms_dashboard.core.dashboard_state import DashboardState
@@ -32,7 +33,10 @@ robot_config = RobotConfigState()
 socket_client = SocketClient(f"http://{DEFAULT_HOST}:{DEFAULT_PORT}")
 message_emit = Message2Server(socket_client, dashboard)
 message_handler = MessageHandler(socket_client, dashboard, robot_config, message_emit)
-neuroone_connection = neuroOne(num_trial=20, t_min=-5, t_max=40, ch=33, trigger_type_interest=TriggerType.STIMULUS)
+neuroone_connection = neuroOne(
+    num_trial=20, t_min=MEP_WINDOW_START_MS, t_max=MEP_WINDOW_END_MS,
+    ch=33, trigger_type_interest=TriggerType.STIMULUS,
+)
 update_dashboard = UpdateDashboard(dashboard, neuroone_connection, client_manager)
 
 # Flag to ensure background thread starts only once

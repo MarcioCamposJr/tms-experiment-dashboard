@@ -10,6 +10,7 @@ import numpy as np
 
 from tms_dashboard.utils.signal_processing import set_apply_baseline_all, new_indexes_fast_tol, p2p_from_time
 from tms_dashboard.core.plot_snapshots import MepPlotSnapshot, TimeSeriesSnapshot
+from tms_dashboard.config import MEP_BASELINE_START_MS, MEP_BASELINE_END_MS
 
 
 @dataclass
@@ -198,6 +199,7 @@ class DashboardState:
             return self._time_series_snapshot
 
     def update_mep_history(self, new_mep_history, t_min, t_max, sampling_rate):
+        """Correct MEPs using the pre-pulse baseline; t_min/t_max are in seconds."""
         if len(new_mep_history) == 0:
             return
         if np.array_equal(new_mep_history, self.mep_history):
@@ -205,22 +207,28 @@ class DashboardState:
         
         new_meps_index = new_indexes_fast_tol(self.mep_history, new_mep_history)
 
+        signal_start_ms = t_min * 1000
+        signal_end_ms = t_max * 1000
         mep_history_baseline = set_apply_baseline_all(
-                                baseline_start_ms=5,      # Baseline start at 5ms
-                                baseline_end_ms=20,        # Baseline end at 20ms
-                                signal_start_ms= t_min,  # Signal starts at -10ms
-                                signal_end_ms= t_max,    # Signal ends at 40ms
-                                data_windows=new_mep_history, 
-                                sampling_rate=sampling_rate
-                            )
-        mep_p2p_history_baseline = [p2p_from_time(mep, self.mep_sampling_rate, t_min) for mep in mep_history_baseline]
-        # Publish a complete result atomically. Signal calculations and send flags
-        # keep their existing behavior; display revisions are tracked separately.
+            baseline_start_ms=MEP_BASELINE_START_MS,
+            baseline_end_ms=MEP_BASELINE_END_MS,
+            signal_start_ms=signal_start_ms,
+            signal_end_ms=signal_end_ms,
+            data_windows=new_mep_history,
+            sampling_rate=sampling_rate,
+        )
+        mep_p2p_history_baseline = [
+            p2p_from_time(mep, sampling_rate, signal_start_ms)
+            for mep in mep_history_baseline
+        ]
+        # Publish a complete result atomically; display revisions are tracked
+        # separately from the existing communication flags.
         with self._plot_lock:
             self.new_meps_index = new_meps_index
             self.mep_history = new_mep_history
             self.mep_history_baseline = mep_history_baseline
             self.mep_p2p_history_baseline = mep_p2p_history_baseline
+            self.mep_sampling_rate = sampling_rate
             self._mep_plot_revision += 1
             self.mep_plot_snapshot = MepPlotSnapshot(
                 revision=self._mep_plot_revision,

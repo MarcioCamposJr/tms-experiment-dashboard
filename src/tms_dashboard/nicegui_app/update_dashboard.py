@@ -188,7 +188,8 @@ class UpdateDashboard:
         mep_p2p_history = snapshot.peak_to_peak[-num_windows:]
 
         # X Axis
-        t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]))
+        # Acquisition windows exclude the final sample at t_max.
+        t_ms = np.linspace(t_min_ms, t_max_ms, len(mep_history[0]), endpoint=False)
         
         traces = []
         
