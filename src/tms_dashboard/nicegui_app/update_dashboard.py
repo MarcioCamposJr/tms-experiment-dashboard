@@ -9,11 +9,12 @@ import plotly.graph_objects as go
 
 from tms_dashboard.nicegui_app.styles import change_color, change_radio_icon, change_label, get_status, change_button, change_icon, change_progress_ui, change_image
 from tms_dashboard.config import IMAGES_DIR
+from tms_dashboard.core.modules.emg_connection import EMGConnection
 
 logger = logging.getLogger(__name__)
 
 class UpdateDashboard:
-    def __init__(self, dashboard, emg_connection, client_manager):
+    def __init__(self, dashboard, emg_connection: EMGConnection, client_manager):
         self.dashboard = dashboard
         self.emg_connection = emg_connection
         self.client_manager = client_manager
