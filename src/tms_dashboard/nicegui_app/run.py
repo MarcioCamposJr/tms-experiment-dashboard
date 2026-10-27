@@ -15,7 +15,8 @@ from tms_dashboard.constants import TriggerType
 from tms_dashboard.core.dashboard_state import DashboardState
 from tms_dashboard.core.robot_config_state import RobotConfigState
 from tms_dashboard.core.modules.socket_client import SocketClient
-from tms_dashboard.core.modules.emg_connection import neuroOne
+from tms_dashboard.core.modules.emg_connection import EMGConnection
+from tms_dashboard.core.modules.neuroone import neuroOne
 from tms_dashboard.core.message_handler import MessageHandler
 from tms_dashboard.core.message_emit import Message2Server
 from tms_dashboard.nicegui_app.update_dashboard import UpdateDashboard
@@ -33,11 +34,11 @@ robot_config = RobotConfigState()
 socket_client = SocketClient(f"http://{DEFAULT_HOST}:{DEFAULT_PORT}")
 message_emit = Message2Server(socket_client, dashboard)
 message_handler = MessageHandler(socket_client, dashboard, robot_config, message_emit)
-neuroone_connection = neuroOne(
+emg_connection: EMGConnection = neuroOne(
     num_trial=20, t_min=MEP_WINDOW_START_MS, t_max=MEP_WINDOW_END_MS,
     ch=33, trigger_type_interest=TriggerType.STIMULUS,
 )
-update_dashboard = UpdateDashboard(dashboard, neuroone_connection, client_manager)
+update_dashboard = UpdateDashboard(dashboard, emg_connection, client_manager)
 
 # Flag to ensure background thread starts only once
 _background_thread_started = False
@@ -62,12 +63,12 @@ def start_background_services():
                 time.sleep(0.1)
                 message_handler.process_messages()
 
-                if neuroone_connection.get_connection() and neuroone_connection.get_status():
-                    dashboard.mep_sampling_rate = neuroone_connection.get_sampling_rate()
-                    mep_history = list(neuroone_connection.get_triggered_window())
+                if emg_connection.get_connection() and emg_connection.get_status():
+                    dashboard.mep_sampling_rate = emg_connection.get_sampling_rate()
+                    mep_history = list(emg_connection.get_triggered_window())
                     dashboard.update_mep_history(mep_history,
-                                                neuroone_connection.t_min,
-                                                neuroone_connection.t_max,
+                                                emg_connection.t_min,
+                                                emg_connection.t_max,
                                                 dashboard.mep_sampling_rate)
                 else:
                     if dashboard.get_all_state_mep():
@@ -83,7 +84,7 @@ def start_background_services():
 
     # Start socket client
     socket_client.connect()
-    neuroone_connection.start()
+    emg_connection.start()
     
     # Start message processing thread (non-UI work only)
     threading.Thread(target=process_messages_loop, daemon=True, name="MessageProcessor").start()
